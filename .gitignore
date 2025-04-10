@@ -2,6 +2,9 @@
 *.txt
 *.json
 *.html
+!comparison_page.html
+!dtext_wiki_page.html
+
 *.css
 test.py
 main2.py
