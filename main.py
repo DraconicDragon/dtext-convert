@@ -286,6 +286,16 @@ def process_ast_links(ast):
 
 
 def parse_dtext_to_ast(dtext):
+    # Pre-scan: temporarily remove [code] and [nodtext] blocks to prevent normalization inside them.
+    placeholder_map = {}
+    def placeholder_replacer(match):
+        key = f"__PLACEHOLDER_{len(placeholder_map)}__"
+        placeholder_map[key] = match.group(0)  # Save the entire block unchanged.
+        return key
+
+    # Replace [code]...[/code] and [nodtext]...[/nodtext] with placeholders.
+    dtext = re.sub(r"(\[(code|nodtext)(?:=[^\]]+)?\].*?\[/\2\])", placeholder_replacer, dtext, flags=re.DOTALL)
+
     html_tag_map = {
         "strong": "b",
         "b": "b",
@@ -311,12 +321,16 @@ def parse_dtext_to_ast(dtext):
         "colgroup": "colgroup",
     }
 
+    # Normalize HTML-style tags to DText-style for the rest of the text.
     for html, dtext_equiv in html_tag_map.items():
         dtext = re.sub(rf"<{html}(\s[^>]*)?>", f"[{dtext_equiv}]", dtext, flags=re.IGNORECASE)
         dtext = re.sub(rf"</{html}>", f"[/{dtext_equiv}]", dtext, flags=re.IGNORECASE)
 
+    # Restore the original code/nodtext blocks.
+    for key, original in placeholder_map.items():
+        dtext = dtext.replace(key, original)
+
     header_pattern = re.compile(r"^(h[456])(#[\w-]+)?\.\s+(.*?)(?=\s*$|\n|$)", re.MULTILINE)
-    # tag_pattern = re.compile(r'\[(/?)(b|i|u|s|tn|spoilers|code|nodtext|expand|quote|table|thead|tbody|tr|td|th|col|colgroup)(?:=([^\]]+))?\]')
     tag_pattern = re.compile(r"\[(/?)(b|i|u|s|tn|spoilers|code|nodtext|expand|quote)(?:=([^\]]+))?\]")
     br_pattern = re.compile(r"\[br\]")  # linebreak
     hr_pattern = re.compile(r"\[hr\]")  # Horizon
@@ -362,7 +376,6 @@ def parse_dtext_to_ast(dtext):
 
             # Recursively parse header content to handle nested DText
             header_children = parse_dtext_to_ast(header_content)
-
             header_node = {"type": header_level, "children": header_children}
             if header_id:
                 header_node["id"] = header_id
@@ -370,14 +383,11 @@ def parse_dtext_to_ast(dtext):
             stack[-1].append(header_node)
             # Advance pos to end of the entire header line (including newline)
             line_end = dtext.find("\n", end)
-            if line_end == -1:
-                pos = len(dtext)
-            else:
-                pos = line_end + 1  # Skip past the newline
+            pos = len(dtext) if line_end == -1 else line_end + 1
             # Skip processing other tokens on this line
             while i < len(tokens) and tokens[i][1].start() < pos:
                 i += 1
-            continue  # Skip the i += 1 at the end of the loop
+            continue
 
         elif kind == "br":
             stack[-1].append({"type": "linebreak"})
@@ -402,7 +412,7 @@ def parse_dtext_to_ast(dtext):
                     else:
                         inner_content = dtext[end:close_pos]
 
-                    # Append the code/nodtext node
+                    # Append the code/nodtext node without further normalization
                     if tag == "code":
                         stack[-1].append({"type": "code", "content": inner_content})
                     elif tag == "nodtext":
