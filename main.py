@@ -6,11 +6,11 @@ from id_link_map import ID_LINK_MAP
 from to_html import runa
 
 # todo: link transformations within list items verify with wiki page id 5655
-
+# todo: handle links that link to IDs, they are supposed to link to an ID on the active page and not danbooru
+# these things are called anchors i forgot
 
 # todo: handle !post #1234 links
 # todo: handle html tags (example: <tn> is not caught and well all the table tags)
-# todo: handle colors depending on what is being linked to, HOW TO DO THAT????
 # todo: handle tag implications
 # todo: handle example posts at the bottom
 
@@ -18,6 +18,20 @@ from to_html import runa
 # todo: handle return carriages with asterisks and then headers too see c.txt
 # todo: aka as above handle paragraphs too
 # todo: handle user link(s?) having < > around them, see 43047 second table
+# todo: make headers bigger in css
+# todo: handle colors depending on what is being linked to, HOW TO DO THAT idk but i may find out 
+
+
+# e621 todo list
+# todo: handle backtick code lines
+# todo: as above: `\`inline code\``
+# todo: [sup] [sub] tags for sup/bscript
+# todo: [color] tags, it supports html color names on wikipedia, e6 tag category names, 3-6 digit hex codes too
+# todo: probably need completely new link with ID regex for e6, so different mode
+# todo: as above: post #1234 stuff definitely needs to be changed with new id link map
+# todo: e6 uses thumb #12345 instead of !post #1234
+# todo: in e6 dtext [code] always makes a block, backticks are used for lines
+# todo: e6 uses [section] instead of [expand], also supports always open through [section,expanded=Title], also, no default title for some reason
 
 
 def wrap_list_items(ast):
@@ -126,7 +140,7 @@ def transform_text_links(text):
                 "children": [text_node(m.group(1))],
             },
         ),
-        # 2. ID-based link for header style: "Link Text":#dtext-id-links
+        # 2. ID-based link for header: "Link Text":#dtext-id-links
         (
             re.compile(r'"([^"]+)":#([a-zA-Z0-9-_]+)'),
             lambda m: {
@@ -330,7 +344,7 @@ def parse_dtext_to_ast(dtext):
     for key, original in placeholder_map.items():
         dtext = dtext.replace(key, original)
 
-    header_pattern = re.compile(r"^(h[456])(#[\w-]+)?\.\s+(.*?)(?=\s*$|\n|$)", re.MULTILINE)
+    header_pattern = re.compile(r"^(h[123456])(#[\w-]+)?\.\s+(.*?)(?=\s*$|\n|$)", re.MULTILINE)
     tag_pattern = re.compile(r"\[(/?)(b|i|u|s|tn|spoilers|code|nodtext|expand|quote)(?:=([^\]]+))?\]")
     br_pattern = re.compile(r"\[br\]")  # linebreak
     hr_pattern = re.compile(r"\[hr\]")  # Horizon
@@ -480,7 +494,7 @@ def load_dtext_input(source="txt", txt_path="dtextH.txt", json_path="wiki_pages.
 
 
 # "txt" or "json"
-#  project voltage 172159
+#  project voltage 172159 # 11229 for ewiki
 dtext_input = load_dtext_input(source="json", target_id=43047)  # id 43047 for help:dtext 5655 for hatsune_miku
 ast = parse_dtext_to_ast(dtext_input)
 
