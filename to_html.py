@@ -4,6 +4,7 @@ import os
 
 from html_template import CSS_CONTENT, generate_full_html
 
+
 def render_with_attrs(tag, node):
     attrs = node.get("attrs", {})
     attr_html = " ".join(f'{k}="{html.escape(v)}"' for k, v in attrs.items())
@@ -12,7 +13,8 @@ def render_with_attrs(tag, node):
         return f"<{tag} {attr_html}>{inner_html}</{tag}>"
     else:
         return f"<{tag}>{inner_html}</{tag}>"
-    
+
+
 def ast_to_html(ast):
     html_parts = []
 
@@ -23,6 +25,9 @@ def ast_to_html(ast):
         "s": "s",
         "tn": "small",
         "spoilers": "span class='spoiler'",
+        "h1": "h1",
+        "h2": "h2",
+        "h3": "h3",
         "h4": "h4",
         "h5": "h5",
         "h6": "h6",
@@ -45,7 +50,7 @@ def ast_to_html(ast):
             inner = node.get("content") or ast_to_html(node.get("children", []))
             cleaned = inner.strip()  # stripping leading/trailing whitespace/newlines, could be done in dtext2ast but eh
 
-            if "\n" in cleaned: # Make codeblock if node_type code content has newlines
+            if "\n" in cleaned:  # Make codeblock if node_type code content has newlines
                 html_parts.append(f"<pre>{html.escape(cleaned)}</pre>")
             else:
                 html_parts.append(f"<code>{html.escape(cleaned)}</code>")
@@ -78,7 +83,9 @@ def ast_to_html(ast):
         elif node_type == "expand":
             title = html.escape(node.get("title", "Show"))
             inner_html = ast_to_html(node.get("children", []))
-            html_parts.append(f"<details><summary>{title}</summary><div class=\"expander-content\">{inner_html}</div></details>")
+            html_parts.append(
+                f'<details><summary>{title}</summary><div class="expander-content">{inner_html}</div></details>'
+            )
         elif node_type == "ul":
             inner_html = ast_to_html(node.get("children", []))
             html_parts.append(f"<ul>{inner_html}</ul>")
@@ -88,7 +95,7 @@ def ast_to_html(ast):
         elif node_type == "quote":
             inner_html = ast_to_html(node.get("children", []))
             html_parts.append(f"<blockquote>{inner_html}</blockquote>")
-            
+
         elif node_type in {"table", "thead", "tbody", "tr", "colgroup", "td", "th", "col"}:
             html_parts.append(render_with_attrs(node_type, node))
 
