@@ -286,10 +286,41 @@ def process_ast_links(ast):
 
 
 def parse_dtext_to_ast(dtext):
+    html_tag_map = {
+        "strong": "b",
+        "b": "b",
+        "em": "i",
+        "i": "i",
+        "u": "u",
+        "s": "s",
+        "spoiler": "spoilers",
+        "tn": "tn",
+        "nodtext": "nodtext",
+        "code": "code",
+        "br": "br",
+        "hr": "hr",
+        "quote": "quote",
+        "expand": "expand",
+        "table": "table",
+        "thead": "thead",
+        "tbody": "tbody",
+        "tr": "tr",
+        "td": "td",
+        "th": "th",
+        "col": "col",
+        "colgroup": "colgroup",
+    }
+
+    for html, dtext_equiv in html_tag_map.items():
+        dtext = re.sub(rf"<{html}(\s[^>]*)?>", f"[{dtext_equiv}]", dtext, flags=re.IGNORECASE)
+        dtext = re.sub(rf"</{html}>", f"[/{dtext_equiv}]", dtext, flags=re.IGNORECASE)
+
     header_pattern = re.compile(r"^(h[456])(#[\w-]+)?\.\s+(.*?)(?=\s*$|\n|$)", re.MULTILINE)
+    # tag_pattern = re.compile(r'\[(/?)(b|i|u|s|tn|spoilers|code|nodtext|expand|quote|table|thead|tbody|tr|td|th|col|colgroup)(?:=([^\]]+))?\]')
     tag_pattern = re.compile(r"\[(/?)(b|i|u|s|tn|spoilers|code|nodtext|expand|quote)(?:=([^\]]+))?\]")
     br_pattern = re.compile(r"\[br\]")  # linebreak
     hr_pattern = re.compile(r"\[hr\]")  # Horizon
+    table_tag_pattern = re.compile(r"\[(/?)(table|thead|tbody|tr|td|th|col|colgroup)(\s+[^\]]+)?\]")
 
     pos = 0
     stack = [[]]  # root node list
@@ -299,10 +330,17 @@ def parse_dtext_to_ast(dtext):
             yield ("header", match)
         for match in tag_pattern.finditer(dtext):
             yield ("tag", match)
+        for match in table_tag_pattern.finditer(dtext):
+            yield ("table_tag", match)
         for match in br_pattern.finditer(dtext):
             yield ("br", match)
         for match in hr_pattern.finditer(dtext):
             yield ("hr", match)
+
+    def parse_attributes(attr_string):
+        if not attr_string:
+            return {}
+        return dict(re.findall(r'(\w+)="([^"]+)"', attr_string.strip()))
 
     tokens = list(tagged_matches())
     tokens.sort(key=lambda x: x[1].start())
@@ -348,10 +386,11 @@ def parse_dtext_to_ast(dtext):
             stack[-1].append({"type": "horizon"})
             pos = end
 
-        elif kind == "tag":
-            tag = match.group(2)
+        elif kind in ("tag", "table_tag"):
+            tag = match.group(2).lower()
             closing = match.group(1) == "/"
             attr = match.group(3)
+            attrs = parse_attributes(match.group(3))
 
             if not closing:
                 if tag in ("code", "nodtext"):
@@ -376,10 +415,11 @@ def parse_dtext_to_ast(dtext):
                         i += 1
                     pos = new_pos
                 else:
-                    # Handle other opening tags (e.g., [b], [i])
                     new_node = {"type": tag, "children": []}
                     if tag == "expand":
                         new_node["title"] = attr if attr else "Show"
+                    if kind == "table_tag" and attrs:
+                        new_node["attrs"] = attrs
                     stack[-1].append(new_node)
                     stack.append(new_node["children"])
                     pos = end
