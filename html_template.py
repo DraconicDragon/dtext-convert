@@ -9,7 +9,12 @@ body {
 }
 
 /* Headers */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     color: #f2f2f2;
     margin-top: 1em;
     margin-bottom: 0.4em;
@@ -20,6 +25,7 @@ a {
     color: #89b4fa;
     text-decoration: none;
 }
+
 a:hover {
     text-decoration: underline;
 }
@@ -41,6 +47,7 @@ span.spoiler {
     border-radius: 3px;
     transition: color 0.05s;
 }
+
 span.spoiler:hover {
     color: white;
 }
@@ -49,15 +56,19 @@ span.spoiler:hover {
 em {
     font-style: italic;
 }
+
 strong {
     font-weight: bold;
 }
+
 u {
     text-decoration: underline;
 }
+
 s {
     text-decoration: line-through;
 }
+
 small {
     font-size: 0.85em;
     color: #a6adc8;
@@ -65,7 +76,8 @@ small {
 
 /* Table styling */
 table {
-    width: 100%;
+    width: auto;
+    /* Adjusts the table width to content */
     border-collapse: collapse;
     margin-top: 0.25em;
     margin-bottom: 0.25em;
@@ -103,6 +115,37 @@ tbody td {
     border: none;
 }
 
+
+/* support alignment of tr, th, and td elements */
+th,
+td {
+    padding: 4px 8px;
+    text-align: left;
+    /* Default alignment */
+}
+
+th[align="center"],
+td[align="center"],
+tr[align="center"]>th,
+tr[align="center"]>td {
+    text-align: center;
+}
+
+th[align="right"],
+td[align="right"],
+tr[align="right"]>th,
+tr[align="right"]>td {
+    text-align: right;
+}
+
+th[align="justify"],
+td[align="justify"],
+tr[align="justify"]>th,
+tr[align="justify"]>td {
+    text-align: justify;
+}
+
+
 /* Horizon rule styling */
 hr {
     border: none;
@@ -117,7 +160,9 @@ details {
     margin: 0.5em 0;
     padding: 0;
     border-radius: 3px;
-    background-color: #2b2d41; /* Restored background color */
+    background-color: #2b2d41;
+    /* Restored background color */
+
 }
 
 /* Styling the summary (button) stays the same */
@@ -126,22 +171,29 @@ details > summary {
     font-weight: bold;
     color: #cdd6f4;
     background-color: #3a3c5a;
-    padding: 0.5em 0.75em;
+    padding: 0.25em 0.75em;
     border-radius: 3px;
     transition: background-color 0.05s;
-    user-select: none;
-    margin: 0;
+    line-height: 1.75em;
 }
 
 details > summary:hover {
     background-color: #4b4d6b;
 }
 
-/* Use a dedicated class for the expander content so that the summary remains untouched */
+details[open] > summary {
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Using a dedicated class for the expander content so that the summary remains untouched */
 .expander-content {
-    margin-top: 0.5em;  /* Space between the summary and the content */
-    padding: 1em;  /* Added more padding to make it fit inside */
-    border-radius: 4px; /* Same rounding as before */
+    margin-top: 0.5em;
+    /* Space between the summary and the content */
+    padding: 1em;
+    /* Added more padding to make it fit inside */
+    border-radius: 3px;
+    /* Same rounding as before */
 }
 
 
@@ -179,7 +231,8 @@ pre {
     background-color: #181825;
     color: #cdd6f4;
     padding: 0.4em 0.65em;
-    border-radius: 0;  /* Remove rounded corners for a minimal look */
+    border-radius: 0;
+    /* Remove rounded corners for a minimal look */
     font-family: 'Fira Code', Consolas, Monaco, 'Courier New', monospace;
     font-size: 0.85em;
     line-height: 1.3;
@@ -196,7 +249,8 @@ ul {
 
 /* List items */
 li {
-    margin: 0.25em 0;
+    margin: 0em 0;
+    line-height: 1.25em;
 }
 
 """
@@ -228,5 +282,5 @@ def generate_full_html(inner_html, embed_css=True, css_filename="styles.css", cs
   </body>
 </html>
 """
-# todo: example posts, implications
+    # todo: example posts, implications
     return template
