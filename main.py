@@ -19,6 +19,7 @@ from to_html import runa
 # todo: aka as above handle paragraphs too
 # todo: handle user link(s?) having < > around them, see 43047 second table
 
+
 def wrap_list_items(ast):
     """
     Converts '* Item', '** Subitem', etc. into nested lists.
@@ -287,8 +288,8 @@ def process_ast_links(ast):
 def parse_dtext_to_ast(dtext):
     header_pattern = re.compile(r"^(h[456])(#[\w-]+)?\.\s+(.*?)(?=\s*$|\n|$)", re.MULTILINE)
     tag_pattern = re.compile(r"\[(/?)(b|i|u|s|tn|spoilers|code|nodtext|expand|quote)(?:=([^\]]+))?\]")
-    br_pattern = re.compile(r"\[br\]") # linebreak
-    hr_pattern = re.compile(r"\[hr\]") # Horizon
+    br_pattern = re.compile(r"\[br\]")  # linebreak
+    hr_pattern = re.compile(r"\[hr\]")  # Horizon
 
     pos = 0
     stack = [[]]  # root node list
@@ -430,7 +431,7 @@ def load_dtext_input(source="txt", txt_path="dtextH.txt", json_path="wiki_pages.
 
 # "txt" or "json"
 #  project voltage 172159
-dtext_input = load_dtext_input(source="json", target_id=172159)  # id 43047 for help:dtext 5655 for hatsune_miku
+dtext_input = load_dtext_input(source="json", target_id=43047)  # id 43047 for help:dtext 5655 for hatsune_miku
 ast = parse_dtext_to_ast(dtext_input)
 
 
