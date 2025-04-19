@@ -5,34 +5,6 @@ import re
 from id_link_map import ID_LINK_MAP
 from to_html import runa
 
-# todo: link transformations within list items verify with wiki page id 5655
-# todo: handle links that link to IDs, they are supposed to link to an ID on the active page and not danbooru
-# these things are called anchors i forgot
-
-# todo: handle !post #1234 links
-# todo: handle html tags (example: <tn> is not caught and well all the table tags)
-# todo: handle tag implications
-# todo: handle example posts at the bottom
-
-# low prio
-# todo: handle return carriages with asterisks and then headers too see c.txt
-# todo: aka as above handle paragraphs too
-# todo: handle user link(s?) having < > around them, see 43047 second table
-# todo: make headers bigger in css
-# todo: handle colors depending on what is being linked to, HOW TO DO THAT idk but i may find out 
-
-
-# e621 todo list
-# todo: handle backtick code lines
-# todo: as above: `\`inline code\``
-# todo: [sup] [sub] tags for sup/bscript
-# todo: [color] tags, it supports html color names on wikipedia, e6 tag category names, 3-6 digit hex codes too
-# todo: probably need completely new link with ID regex for e6, so different mode
-# todo: as above: post #1234 stuff definitely needs to be changed with new id link map
-# todo: e6 uses thumb #12345 instead of !post #1234
-# todo: in e6 dtext [code] always makes a block, backticks are used for lines
-# todo: e6 uses [section] instead of [expand], also supports always open through [section,expanded=Title], also, no default title for some reason
-
 
 def wrap_list_items(ast):
     """
