@@ -1,13 +1,13 @@
 # DText Parser TODOs
 
 ## General
-- [ ] Link transformations within list items (verify with [wiki page #5655](https://danbooru.donmai.us/wiki_pages/5655))
 - [ ] Handle links that refer to IDs (they should link to an anchor on the active page, not Danbooru)
 - [ ] Handle `!post #1234` links
 - [x] Handle HTML tags (e.g. `<tn>`, `<table>`, `<tr>`, `<td>`, etc.)
 - [ ] Handle tag implications
 - [ ] Handle example posts at the bottom of pages
 - [ ] ID Link eg topic #1234/p2 not linking with page 2
+- [ ] Link transformations within list items (verify with [wiki page #5655](https://danbooru.donmai.us/wiki_pages/5655) external links section)
 
 
 ## Low Priority
