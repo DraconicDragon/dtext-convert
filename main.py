@@ -221,7 +221,7 @@ def transform_text_links(text):
                 "children": [text_node("@" + m.group(1))],
             },
         ),
-        # 12. ID-based shorthand links like post #1234 or comment #5678
+        # 12. ID-based shorthand links like post #1234 or comment #5678/p2
         (
             re.compile(r"\b(" + "|".join(map(re.escape, ID_LINK_MAP.keys())) + r")\s*#(\d+)(/p(\d+))?\b"),
             lambda m: {
