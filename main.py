@@ -223,11 +223,11 @@ def transform_text_links(text):
         ),
         # 12. ID-based shorthand links like post #1234 or comment #5678
         (
-            re.compile(r"\b(" + "|".join(map(re.escape, ID_LINK_MAP.keys())) + r")\s*#(\d+)\b"),
+            re.compile(r"\b(" + "|".join(map(re.escape, ID_LINK_MAP.keys())) + r")\s*#(\d+)(/p(\d+))?\b"),
             lambda m: {
                 "type": "a",
-                "attrs": {"href": ID_LINK_MAP[m.group(1)] + m.group(2)},
-                "children": [text_node(f"{m.group(1)} #{m.group(2)}")],
+                "attrs": {"href": ID_LINK_MAP[m.group(1)] + m.group(2) + (f"?page={m.group(4)}" if m.group(4) else "")},
+                "children": [text_node(f"{m.group(1)} #{m.group(2)}" + (f"/p{m.group(4)}" if m.group(4) else ""))],
             },
         ),
     ]
