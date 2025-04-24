@@ -1,0 +1,2 @@
+# Ignore HTML files in language stats
+assets/*.html linguist-detectable=false
