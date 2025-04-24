@@ -6,19 +6,38 @@ body {
     line-height: 1.5;
     padding: 1em;
     margin: 0;
+    transform: scale(0.9); /* Scale everything to 90% */
+    transform-origin: top left; /* Keeps the scaling from shifting */
 }
 
 /* Headers */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
     color: #f2f2f2;
     margin-top: 1em;
     margin-bottom: 0.4em;
+    font-weight: 500; /* Slightly less bold */
+    line-height: 1.3;
 }
+
+h1 {
+    font-size: 2.2em;
+}
+h2 {
+    font-size: 1.9em;
+}
+h3 {
+    font-size: 1.6em;
+}
+h4 {
+    font-size: 1.4em;
+}
+h5 {
+    font-size: 1.2em;
+}
+h6 {
+    font-size: 1em;
+}
+
 
 /* Highlight the target element, for header ID linking */
 :target { 
