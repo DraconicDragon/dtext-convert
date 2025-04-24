@@ -20,6 +20,12 @@ h6 {
     margin-bottom: 0.4em;
 }
 
+/* Highlight the target element, for header ID linking */
+:target { 
+    background-color: rgba(173, 216, 230, 0.3);  /* soft yellow highlight */
+    transition: background-color 0.5s ease;
+}
+
 /* Links */
 a {
     color: #89b4fa;
