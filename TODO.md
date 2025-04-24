@@ -16,6 +16,7 @@
 - [ ] Handle user links enclosed in `< >` (see wiki page #43047, second table)
 - [ ] Make headers visually larger in CSS (or rather opposite: make overall text smaller?)
 - [ ] Style links based on what they refer to (tag category colors, color-code tag types, etc.)
+- [ ] However this happened: `<code>[co</code><code>de][u]code[/u][/co</code><code>de]</code>`
 
 ---
 
