@@ -96,8 +96,8 @@ def transform_text_links(text):
         if url.startswith("/"):
             return "https://danbooru.donmai.us" + url
         elif url.startswith("#"):
-            # For a hash link, if you want it absolute, you can change this.
-            return "https://danbooru.donmai.us/" + url
+            # Keep hash links relative to the current page
+            return url
         else:
             return url
 
