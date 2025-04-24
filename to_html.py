@@ -62,12 +62,21 @@ def ast_to_html(ast):
 
         elif node_type in tag_map:
             tag = tag_map[node_type]
-            if " " in tag:
+            inner_html = ast_to_html(node.get("children", []))
+
+            if node_type.startswith("h") and node_type[1:].isdigit():  # h1–h6
+                # Extract heading text to use as ID
+                text_content = "".join(
+                    child["content"] for child in node.get("children", []) if child["type"] == "text"
+                )
+                header_id = "dtext-" + text_content.strip().replace(" ", "-").lower()
+                html_parts.append(f'<{tag} id="{html.escape(header_id)}">{inner_html}</{tag}>')
+
+            elif " " in tag:
                 tag_name, attrs = tag.split(" ", 1)
-                inner_html = ast_to_html(node.get("children", []))
                 html_parts.append(f"<{tag_name} {attrs}>{inner_html}</{tag_name}>")
+
             else:
-                inner_html = ast_to_html(node.get("children", []))
                 html_parts.append(f"<{tag}>{inner_html}</{tag}>")
 
         elif node_type == "nodtext":
