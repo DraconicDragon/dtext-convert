@@ -105,7 +105,29 @@ def transform_text_links(text):
 
     # List of patterns, ordered from most specific to general.
     patterns = [
-        # 1. Masked link: "Text":[URL] where URL can begin with http://, https://, /, or #
+        # 1. External link with custom text and indicator (e.g., Wikipedia: Hatsune Miku)
+        # NOTE: for wiki page #5655 External links section
+        # NEEDS TO BE AT THE TOP/RUN FIRST!
+        # clashes with normal/plain link detection otherwise
+        (
+            re.compile(r'"([^"]+)":(https?://[^\s]+)'),  # Match "Text":http(s)://URL
+            lambda m: {
+                "type": "a",
+                "attrs": {
+                    "href": m.group(2),
+                    "class": "external-link",  # Add a class to indicate it's an external link
+                },
+                "children": [
+                    text_node(m.group(1)),
+                    {
+                        "type": "span",
+                        "attrs": {"class": "external-link-icon"},
+                        "children": [text_node("🔗")],
+                    },  # Add external link icon (can be styled with CSS)
+                ],
+            },
+        ),
+        # 2. Masked link: "Text":[URL] where URL can begin with http://, https://, /, or #
         (
             re.compile(r'"([^"]+)":\[((?:https?://|\/|#)[^\]]+)\]'),
             lambda m: {
@@ -114,7 +136,7 @@ def transform_text_links(text):
                 "children": [text_node(m.group(1))],
             },
         ),
-        # 2. ID-based link for header: "Link Text":#dtext-id-links
+        # 3. ID-based link for header: "Link Text":#dtext-id-links
         (
             re.compile(r'"([^"]+)":#([a-zA-Z0-9-_]+)'),
             lambda m: {
@@ -123,7 +145,7 @@ def transform_text_links(text):
                 "children": [text_node(m.group(1))],
             },
         ),
-        # 3. Markdown style link: [Text](https://danbooru.donmai.us)
+        # 4. Markdown style link: [Text](https://danbooru.donmai.us)
         (
             re.compile(r"\[([^\]]+)\]\((https?://[^)]+)\)"),
             lambda m: {
@@ -132,7 +154,7 @@ def transform_text_links(text):
                 "children": [text_node(m.group(1))],
             },
         ),
-        # 4. Reverse Markdown style link: [https://danbooru.donmai.us](Text)
+        # 5. Reverse Markdown style link: [https://danbooru.donmai.us](Text)
         (
             re.compile(r"\[(https?://[^\]]+)\]\(([^)]+)\)"),
             lambda m: {
@@ -141,7 +163,7 @@ def transform_text_links(text):
                 "children": [text_node(m.group(2))],
             },
         ),
-        # 5. BBCode style without custom text: [url]https?://danbooru.donmai.us[/url]
+        # 6. BBCode style without custom text: [url]https?://danbooru.donmai.us[/url]
         (
             re.compile(r"\[url\](https?://[^\[]+?)\[/url\]"),
             lambda m: {
@@ -150,7 +172,7 @@ def transform_text_links(text):
                 "children": [text_node(m.group(1).strip())],
             },
         ),
-        # 6. BBCode style with custom text: [url=https://danbooru.donmai.us]Text[/url]
+        # 7. BBCode style with custom text: [url=https://danbooru.donmai.us]Text[/url]
         (
             re.compile(r"\[url=(https?://[^\]]+)\](.*?)\[/url\]"),
             lambda m: {
@@ -159,7 +181,7 @@ def transform_text_links(text):
                 "children": [text_node(m.group(2))],
             },
         ),
-        # 7. Delimited basic link: <https?://danbooru.donmai.us>
+        # 8. Delimited basic link: <https?://danbooru.donmai.us>
         (
             re.compile(r"<(https?://[^>]+)>"),
             lambda m: {
@@ -168,7 +190,7 @@ def transform_text_links(text):
                 "children": [text_node(m.group(1))],
             },
         ),
-        # 8. Basic link: https://danbooru.donmai.us (will be caught if not already transformed)
+        # 9. Basic link: https://danbooru.donmai.us (will be caught if not already transformed)
         (
             re.compile(r'(?<![">])\b(https?://[^\s<]+)\b'),
             lambda m: {
@@ -177,7 +199,7 @@ def transform_text_links(text):
                 "children": [text_node(m.group(1))],
             },
         ),
-        # 9. Wiki link: [[Page]] or [[Page|Custom Text]]
+        # 10. Wiki link: [[Page]] or [[Page|Custom Text]]
         (
             re.compile(r"\[\[([^|\]]+)(\|([^\]]*))?\]\]"),
             lambda m: (
@@ -200,7 +222,7 @@ def transform_text_links(text):
                 ),
             ),
         ),
-        # 10. Tag search link: {{tag}} or {{tag|Custom Text}}
+        # 11. Tag search link: {{tag}} or {{tag|Custom Text}}
         (
             re.compile(r"\{\{([^|\}]+)(\|([^}]*))?\}\}"),
             lambda m: {
@@ -211,7 +233,7 @@ def transform_text_links(text):
                 ],
             },
         ),
-        # 11. User link: @username
+        # 12. User link: @username
         (
             # < > only there cause the dtext:help wiki api resp has it despite wiki not mentioning it
             re.compile(r"(?:<)?@(\w+)>?"),
@@ -221,7 +243,7 @@ def transform_text_links(text):
                 "children": [text_node("@" + m.group(1))],
             },
         ),
-        # 12. ID-based shorthand links like post #1234 or comment #5678/p2
+        # 13. ID-based shorthand links like post #1234 or comment #5678/p2
         (
             re.compile(r"\b(" + "|".join(map(re.escape, ID_LINK_MAP.keys())) + r")\s*#(\d+)(/p(\d+))?\b"),
             lambda m: {
@@ -471,7 +493,8 @@ def load_dtext_input(source="txt", txt_path="dtextH.txt", json_path="wiki_pages.
 
 # "txt" or "json"
 #  project voltage 172159 # 11229 for ewiki
-dtext_input = load_dtext_input(source="json", target_id=43047)  # id 43047 for help:dtext 5655 for hatsune_miku
+dtext_input = load_dtext_input(source="json", target_id=43047)
+# id 43047 for help:dtext 5655 for hatsune_miku; 46211 kancolle
 ast = parse_dtext_to_ast(dtext_input)
 
 
