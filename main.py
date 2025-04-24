@@ -139,22 +139,22 @@ def transform_text_links(text):
                 "children": [text_node(m.group(2))],
             },
         ),
-        # 5. BBCode style with custom text: [url=https://danbooru.donmai.us]Text[/url]
-        (
-            re.compile(r"\[url=(https?://[^\]]+)\](.*?)\[/url\]"),
-            lambda m: {
-                "type": "a",
-                "attrs": {"href": m.group(1)},
-                "children": [text_node(m.group(2))],
-            },
-        ),
-        # 6. BBCode style without custom text: [url]https?://danbooru.donmai.us[/url]
+        # 5. BBCode style without custom text: [url]https?://danbooru.donmai.us[/url]
         (
             re.compile(r"\[url\](https?://[^\[]+?)\[/url\]"),
             lambda m: {
                 "type": "a",
                 "attrs": {"href": m.group(1).strip()},
                 "children": [text_node(m.group(1).strip())],
+            },
+        ),
+        # 6. BBCode style with custom text: [url=https://danbooru.donmai.us]Text[/url]
+        (
+            re.compile(r"\[url=(https?://[^\]]+)\](.*?)\[/url\]"),
+            lambda m: {
+                "type": "a",
+                "attrs": {"href": m.group(1)},
+                "children": [text_node(m.group(2))],
             },
         ),
         # 7. Delimited basic link: <https?://danbooru.donmai.us>
@@ -211,7 +211,8 @@ def transform_text_links(text):
         ),
         # 11. User link: @username
         (
-            re.compile(r"@(\w+)"),
+            # < > only there cause the dtext:help wiki api resp has it despite wiki not mentioning it
+            re.compile(r"(?:<)?@(\w+)>?"),
             lambda m: {
                 "type": "a",
                 "attrs": {"href": "https://danbooru.donmai.us/users?name=" + m.group(1)},
@@ -274,6 +275,7 @@ def process_ast_links(ast):
 def parse_dtext_to_ast(dtext):
     # Pre-scan: temporarily remove [code] and [nodtext] blocks to prevent normalization inside them.
     placeholder_map = {}
+
     def placeholder_replacer(match):
         key = f"__PLACEHOLDER_{len(placeholder_map)}__"
         placeholder_map[key] = match.group(0)  # Save the entire block unchanged.

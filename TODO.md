@@ -2,6 +2,7 @@
 
 ## General
 - [ ] Handle links that refer to IDs (they should link to an anchor on the active page, not Danbooru)
+  - [ ] ID Links not scrolling to the id thingy
 - [ ] Handle `!post #1234` links
 - [x] Handle HTML tags (e.g. `<tn>`, `<table>`, `<tr>`, `<td>`, etc.)
 - [ ] Handle tag implications
@@ -13,7 +14,7 @@
 ## Low Priority
 - [ ] Handle carriage returns with asterisks and headers (see `c.txt`)
 - [ ] Handle paragraphs similarly to above
-- [ ] Handle user links enclosed in `< >` (see wiki page #43047, second table)
+- [x] Handle user links enclosed in `< >` (see wiki page #43047, second table)
 - [ ] Make headers visually larger in CSS (or rather opposite: make overall text smaller?)
 - [ ] Style links based on what they refer to (tag category colors, color-code tag types, etc.)
 - [ ] However this happened: `<code>[co</code><code>de][u]code[/u][/co</code><code>de]</code>`
