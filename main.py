@@ -94,7 +94,9 @@ def transform_text_links(text):
     # Helper: if a URL starts with "/" or "#", prepend the base URL.
     def resolve_url(url):
         if url.startswith("/"):
-            return "https://danbooru.donmai.us" + url
+            return (
+                "https://danbooru.donmai.us" + url
+            )  # todo: change this to local page for wiki when everything is local
         elif url.startswith("#"):
             # Keep hash links relative to the current page
             return url
@@ -179,23 +181,23 @@ def transform_text_links(text):
         (
             re.compile(r"\[\[([^|\]]+)(\|([^\]]*))?\]\]"),
             lambda m: (
-                # If custom text is empty, remove any parenthesized qualifier.
-                {
+                lambda page_section, display_text: {
                     "type": "a",
                     "attrs": {
                         "href": "https://danbooru.donmai.us/wiki_pages/"
-                        + m.group(1).split("#")[0].strip().replace(" ", "_").lower()
+                        + page_section[0].replace(" ", "_").lower()
+                        + (("#dtext-" + page_section[1].lower()) if page_section[1] else "")
                     },
-                    "children": [
-                        text_node(
-                            (
-                                re.sub(r"\s*\([^)]*\)", "", m.group(1).split("#")[0].strip()).strip()
-                                if not (m.group(3) and m.group(3).strip())
-                                else m.group(3).strip()
-                            )
-                        )
-                    ],
+                    "children": [text_node(display_text)],
                 }
+            )(
+                # Split page#section if exists
+                m.group(1).strip().split("#") + [None],
+                (
+                    re.sub(r"\s*\([^)]*\)", "", m.group(1).split("#")[0].strip()).strip()
+                    if not (m.group(3) and m.group(3).strip())
+                    else m.group(3).strip()
+                ),
             ),
         ),
         # 10. Tag search link: {{tag}} or {{tag|Custom Text}}
