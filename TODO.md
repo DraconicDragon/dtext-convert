@@ -1,8 +1,9 @@
 # DText Parser TODOs
 
 ## General
-- [ ] Handle links that refer to IDs (they should link to an anchor on the active page, not Danbooru)
-  - [ ] ID Links not scrolling to the id thingy
+
+- [x] Handle links that refer to IDs (they should link to an anchor on the active page, not Danbooru)
+  - [x] ID Links not scrolling to the id thingy
 - [ ] Handle `!post #1234` links
 - [x] Handle HTML tags (e.g. `<tn>`, `<table>`, `<tr>`, `<td>`, etc.)
 - [ ] Handle tag implications
@@ -10,8 +11,8 @@
 - [x] ID Link eg topic #1234/p2 not linking with page 2
 - [ ] Link transformations within list items (verify with [wiki page #5655](https://danbooru.donmai.us/wiki_pages/5655) external links section)
 
-
 ## Low Priority
+
 - [ ] Handle carriage returns with asterisks and headers (see `c.txt`)
 - [ ] Handle paragraphs similarly to above
 - [x] Handle user links enclosed in `< >` (see wiki page #43047, second table)
