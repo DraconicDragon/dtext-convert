@@ -9,12 +9,13 @@ from to_html import runa
 def wrap_list_items(ast):
     """
     Converts '* Item', '** Subitem', etc. into nested lists.
-    Also handles link transformations within list items properly.
+    Also handles link transformations within list items properly,
+    and preserves all other inline transformations inside list items.
     """
     result = []
     list_stack = []
 
-    def push_li_to_stack(level, content):
+    def push_li_to_stack(level, content_nodes):
         nonlocal result, list_stack
 
         # Close deeper or same-level stacks
@@ -22,7 +23,7 @@ def wrap_list_items(ast):
             list_stack.pop()
 
         # Create the list item with transformed content
-        li_node = {"type": "li", "children": process_ast_links(transform_text_links(content))}
+        li_node = {"type": "li", "children": content_nodes}
 
         if not list_stack:
             # New top-level list
@@ -47,6 +48,12 @@ def wrap_list_items(ast):
                         list_stack.append((level, child))
                         break
 
+    # Accumulate "pending" inline nodes when you're inside a list item
+    def append_to_current_li(node):
+        _, current_ul = list_stack[-1]
+        current_li = current_ul["children"][-1]
+        current_li.setdefault("children", []).append(node)
+
     for node in ast:
         if node["type"] == "text":
             lines = node["content"].split("\n")
@@ -58,19 +65,27 @@ def wrap_list_items(ast):
                 match = re.match(r"^(\*+)\s+(.*)", line)
                 if match:
                     level = len(match.group(1))
-                    content = match.group(2).strip()
-                    push_li_to_stack(level, content)
+                    raw = match.group(2)
+                    # take the raw string and re-run inline transforms
+                    content_nodes = process_ast_links(transform_text_links(raw))
+                    push_li_to_stack(level, content_nodes)
                 else:
-                    list_stack.clear()
-                    result.append({"type": "text", "content": line})
+                    # If we're in a list, keep this text _inside_ the last <li>
+                    if list_stack:
+                        append_to_current_li({"type": "text", "content": line})
+                    else:
+                        result.append({"type": "text", "content": line})
         else:
-            # Recursively handle any children
+            # First, recurse into its children so they're fixed up
             if "children" in node:
                 node["children"] = wrap_list_items(node["children"])
-            result.append(node)
+            # Then, if we're inside a list, it belongs _inside_ the last <li>
+            if list_stack:
+                append_to_current_li(node)
+            else:
+                result.append(node)
 
     return result
-
 
 def transform_text_links(text):
     """
@@ -495,6 +510,8 @@ def load_dtext_input(source="txt", txt_path="dtextH.txt", json_path="wiki_pages.
 #  project voltage 172159 # 11229 for ewiki
 dtext_input = load_dtext_input(source="json", target_id=43047)
 # id 43047 for help:dtext 5655 for hatsune_miku; 46211 kancolle
+# 5883 tag groups
+# 29067 tag_group:backgrounds
 ast = parse_dtext_to_ast(dtext_input)
 
 
@@ -502,3 +519,5 @@ ast = parse_dtext_to_ast(dtext_input)
 save_json(ast, "ast_output.json")
 
 runa()
+
+#'[See [[Tag Groups]].]\r\n\r\n[expand=Table of Contents]\r\n* 1. "About":#dtext-about\r\n* 2. "Colors":#dtext-colors\r\n* 3. "Multiple Colors":#dtext-multiple\r\n* 4. "Patterns":#dtext-patterns\r\n* 5. "Descriptive":#dtext-descriptive\r\n* 6. "Objects and Nouns":#dtext-objects\r\n* 7. "Mediums":#dtext-mediums\r\n* 8. "Background Related":#dtext-related\r\n[/expand]\r\n\r\nh4#about. About\r\n\r\nTags which describe the background of posts. Most, but not all, have "background" in their name.\r\n\r\nh4#colors. Colors\r\n\r\n* [[aqua background]]\r\n* [[beige background]] (deprecated)\r\n* [[black background]]\r\n* [[blue background]]\r\n* [[brown background]]\r\n* [[green background]]\r\n* [[grey background]]\r\n* [[orange background]]\r\n* [[pink background]]\r\n* [[purple background]]\r\n* [[red background]]\r\n* [[simple background]]\r\n** [[transparent background]]\r\n* [[white background]]\r\n* [[yellow background]]\r\n\r\nh4#multiple. Multiple Colors\r\n\r\n* [b][[colorful background]][/b]\r\n* [[gradient background]]\r\n* [[greyscale with colored background]]\r\n* [[halftone background]]\r\n* [[monochrome background]]\r\n* [[multicolored background]] (deprecated)\r\n* [[rainbow background]]\r\n** [[heaven condition]]\r\n* [[three-toned background]]\r\n* [[two-tone background]]\r\n\r\nh4#patterns. Patterns\r\n\r\n* [[argyle background]]\r\n* [[checkered background]]\r\n* [[cross background]]\r\n* [[dithered background]]\r\n* [[dotted background]]\r\n* [[grid background]]\r\n* [[honeycomb background]]\r\n* [[lace background]]\r\n* [[marble background]]\r\n* [[mosaic background]]\r\n* [b][[patterned background]][/b]\r\n* [[plaid background]]\r\n* [[polka dot background]]\r\n* [[spiral background]]\r\n* [[splatter background]]\r\n* [[striped background]]\r\n** [[diagonal-striped background]]\r\n* [[sunburst background]]\r\n* [[triangle background]]\r\n\r\nh4#descriptive. Descriptive\r\n* [[abstract background]]\r\n* [[blurry background]]\r\n* [[bright background]]\r\n* [[dark background]]\r\n* [[drama layer]]\r\n\r\nh4#objects. Objects and Nouns\r\n\r\n* [[animal background]] ([[animal]])\r\n* [[bubble background]] ([[bubble]])\r\n* [[butterfly background]] ([[butterfly]])\r\n* [[card background]] ([[playing_card]])\r\n* [[cloud background]] ([[cloud]])\r\n* [[fiery background]] ([[fire]])\r\n* [[flag background]] ([[flag]])\r\n* [[floral background]] ([[flower]])\r\n** [[rose background]] ([[rose]])\r\n* [[food-themed background]] ([[food]])\r\n* [[fruit background]] ([[fruit]])\r\n** [[strawberry background]] ([[strawberry]])\r\n* [[heart background]] ([[heart]])\r\n* [[leaf background]] ([[leaf]])\r\n* [[lightning background]] ([[lightning]])\r\n* [[paw print background]] ([[paw print]])\r\n* [[rabbit background]] ([[rabbit]])\r\n* [[snowflake background]] ([[snowflakes]])\r\n* [[sofmap background]] ([[sofmap]])\r\n* [[sparkle background]] ([[sparkle]])\r\n* [[spider web background]] ([[spider web]])\r\n* [[star symbol background]] ([[star_(symbol)]])\r\n* [[starry background]] (deprecated)\r\n* [[text background]] ([[text focus]])\r\n* [[weapon background]] ([[weapon]])\r\n\r\nh4#mediums. Mediums\r\n* [[3d_background]]\r\n* [[AI-generated background]]\r\n* [[collage background]]\r\n* [[paneled background]]\r\n* [[photo background]]\r\n* [[game screenshot background]]\r\n* [[paper background]]\r\n* [[screenshot background]]\r\n* [[sketch background]]\r\n* [[watercolor background]]\r\n\r\nh4#related. Background Related\r\n* [[backlighting]]\r\n* [[blending]]\r\n* [[chibi inset]]\r\n* [[imageboard colors]]\r\n* [[projected inset]]\r\n* [[zoom layer]]'
