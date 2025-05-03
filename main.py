@@ -87,6 +87,7 @@ def wrap_list_items(ast):
 
     return result
 
+
 def transform_text_links(text):
     """
     Given a string of text, scan it for link syntaxes and return a list of nodes.
@@ -120,9 +121,11 @@ def transform_text_links(text):
 
     # List of patterns, ordered from most specific to general.
     patterns = [
-        # 1. External link with custom text and indicator (e.g., Wikipedia: Hatsune Miku)
-        # NOTE: for wiki page #5655 External links section
-        # NEEDS TO BE AT THE TOP/RUN FIRST!
+        # 1. SPECIAL External link with custom text and indicator (e.g., Wikipedia: Hatsune Miku)
+        # NOTE: SPECIAL because: it's for wiki page #5655 External links section, and likely more.
+        # NOTE:2 its undocumented, but external links can just be set with other masked link methods
+        ### ...which is seen on page 46211 (kancolle)
+        # NOTE: NEEDS TO BE AT THE TOP/RUN FIRST!
         # clashes with normal/plain link detection otherwise
         (
             re.compile(r'"([^"]+)":(https?://[^\s]+)'),  # Match "Text":http(s)://URL
@@ -132,6 +135,7 @@ def transform_text_links(text):
                     "href": m.group(2),
                     "class": "external-link",  # Add a class to indicate it's an external link
                 },
+                # todo: add this icon to other external (non base-URL) links, eg: 46211 (kancolle)
                 "children": [
                     text_node(m.group(1)),
                     {
@@ -508,7 +512,7 @@ def load_dtext_input(source="txt", txt_path="dtextH.txt", json_path="wiki_pages.
 
 # "txt" or "json"
 #  project voltage 172159 # 11229 for ewiki
-dtext_input = load_dtext_input(source="json", target_id=43047)
+dtext_input = load_dtext_input(source="json", target_id=46211)
 # id 43047 for help:dtext 5655 for hatsune_miku; 46211 kancolle
 # 5883 tag groups
 # 29067 tag_group:backgrounds
