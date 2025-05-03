@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] change css for better mobile support (tables mainly)
 - [x] Handle links that refer to IDs (they should link to an anchor on the active page, not Danbooru)
   - [x] ID Links not scrolling to the id thingy
 - [ ] Handle `!post #1234` links
@@ -19,6 +20,7 @@
 - [ ] Make headers visually larger in CSS (or rather opposite: make overall text smaller?)
 - [ ] Style links based on what they refer to (tag category colors, color-code tag types, etc.)
 - [ ] However this happened: `<code>[co</code><code>de][u]code[/u][/co</code><code>de]</code>`
+- [ ] Add external link icon to any external link, not just the special #5655 one
 
 ---
 
