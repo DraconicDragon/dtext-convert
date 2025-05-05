@@ -89,7 +89,7 @@ def ast_to_html(ast):
             href = attrs.get("href", "#")
             inner_html = ast_to_html(node.get("children", []))
             html_parts.append(f'<a href="{href}">{inner_html}</a>')
-        elif node_type == "expand":
+        elif node_type == "expand" or node_type == "section":
             title = html.escape(node.get("title", "Show"))
             inner_html = ast_to_html(node.get("children", []))
             html_parts.append(
