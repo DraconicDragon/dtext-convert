@@ -14,6 +14,7 @@
 
 ## Low Priority
 
+- [ ] Find out whats causing the enormous amount of ul and li (originates in dtext to ast looks like)
 - [ ] Handle carriage returns with asterisks and headers (see `c.txt`)
 - [ ] Handle paragraphs similarly to above
 - [x] Handle user links enclosed in `< >` (see wiki page #43047, second table)

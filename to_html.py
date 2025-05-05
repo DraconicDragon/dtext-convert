@@ -123,6 +123,7 @@ def save_html(content, filename):
         f.write(content)
 
 
+# why is this here i forgot
 def save_json(data, filename):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(script_dir, filename)
