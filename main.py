@@ -13,40 +13,61 @@ def wrap_list_items(ast):
     and preserves all other inline transformations inside list items.
     """
     result = []
-    list_stack = []
+    list_stack = []  # Stores tuples of (level, ul_node_reference)
 
     def push_li_to_stack(level, content_nodes):
         nonlocal result, list_stack
 
-        # Close deeper or same-level stacks
-        while list_stack and list_stack[-1][0] >= level:
-            list_stack.pop()
-
-        # Create the list item with transformed content
         li_node = {"type": "li", "children": content_nodes}
 
-        if not list_stack:
-            # New top-level list
-            ul_node = {"type": "ul", "children": [li_node]}
-            list_stack.append((level, ul_node))
-            result.append(ul_node)
-        else:
-            # Add to parent list
-            parent_level, parent_ul = list_stack[-1]
-            parent_li = parent_ul["children"][-1]
+        # 1. Pop lists from stack that are strictly deeper than the current item's level.
+        while list_stack and list_stack[-1][0] > level:
+            list_stack.pop()
 
-            # If parent li doesn't have a sublist yet, create one
-            if not any(child["type"] == "ul" for child in parent_li.get("children", [])):
-                sub_ul = {"type": "ul", "children": [li_node]}
-                parent_li.setdefault("children", []).append(sub_ul)
-                list_stack.append((level, sub_ul))
+        # 2. Determine where to add the new li_node.
+        if not list_stack or list_stack[-1][0] < level:
+            # This item starts a new list (either top-level or nested).
+            new_ul_node = {"type": "ul", "children": [li_node]}
+
+            if not list_stack:
+                # Case A: New top-level list.
+                result.append(new_ul_node)
             else:
-                # Find the existing sublist and append to it
-                for child in parent_li.get("children", []):
-                    if child["type"] == "ul":
-                        child["children"].append(li_node)
-                        list_stack.append((level, child))
-                        break
+                # Case B: New nested list. list_stack[-1][0] < level.
+                # It should be a child of the last 'li' in the parent 'ul'.
+                _parent_level, parent_ul = list_stack[-1]
+                # Ensure parent_ul has children (li items) before accessing [-1]
+                if parent_ul["children"]:
+                    parent_li = parent_ul["children"][-1]
+                    parent_li.setdefault("children", []).append(new_ul_node)
+                else:
+                    # This case implies a ul was created without an li, which shouldn't happen
+                    # with standard list input. Or, the parent_li itself is what we are creating
+                    # the sublist for. For robustness, if parent_ul has no children,
+                    # this might indicate an issue or a very specific structure.
+                    # However, typical list nesting implies parent_li exists.
+                    # If this path is hit, it might be worth logging or re-evaluating.
+                    # For now, we'll assume parent_li should exist from previous pushes.
+                    # If parent_ul["children"] is empty, this new_ul_node might be orphaned
+                    # from an li if not handled carefully.
+                    # A robust way: the new_ul_node is always added to the children of the parent_li.
+                    # This means an li must have been added to parent_ul for this to be a sub-list.
+                    # This is generally true if levels increment one by one.
+                    # If parent_ul["children"] is empty, it means this is the first child of parent_ul,
+                    # which contradicts list_stack[-1][0] < level logic unless structure is unusual.
+                    # The most direct parent li is list_stack[-1][1]["children"][-1]
+                    parent_li = parent_ul["children"][-1] # Relies on parent_ul having at least one li
+                    parent_li.setdefault("children", []).append(new_ul_node)
+
+
+            list_stack.append((level, new_ul_node))
+
+        elif list_stack[-1][0] == level:
+            # Case C: Item belongs to the existing list at the current level.
+            _current_level, current_ul = list_stack[-1]
+            current_ul["children"].append(li_node)
+        # else: list_stack[-1][0] > level -- this case is eliminated by the while loop.
+
 
     # Accumulate "pending" inline nodes when you're inside a list item
     def append_to_current_li(node):
