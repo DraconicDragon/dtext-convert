@@ -56,9 +56,8 @@ def wrap_list_items(ast):
                     # If parent_ul["children"] is empty, it means this is the first child of parent_ul,
                     # which contradicts list_stack[-1][0] < level logic unless structure is unusual.
                     # The most direct parent li is list_stack[-1][1]["children"][-1]
-                    parent_li = parent_ul["children"][-1] # Relies on parent_ul having at least one li
+                    parent_li = parent_ul["children"][-1]  # Relies on parent_ul having at least one li
                     parent_li.setdefault("children", []).append(new_ul_node)
-
 
             list_stack.append((level, new_ul_node))
 
@@ -67,7 +66,6 @@ def wrap_list_items(ast):
             _current_level, current_ul = list_stack[-1]
             current_ul["children"].append(li_node)
         # else: list_stack[-1][0] > level -- this case is eliminated by the while loop.
-
 
     # Accumulate "pending" inline nodes when you're inside a list item
     def append_to_current_li(node):
@@ -81,31 +79,72 @@ def wrap_list_items(ast):
             for line in lines:
                 stripped = line.strip()
                 if stripped == "":
-                    continue  # skip blank lines during list parsing
+                    # Handling of blank lines within text nodes during list processing.
+                    # This might need further refinement based on exact DText rules
+                    # for how blank lines interact with list item continuation.
+                    # If a blank line is encountered while a list is active,
+                    # it could signify the end of the current item's text or the list itself
+                    # if not followed by another list item or indented content.
+                    # For now, if list_stack is active, we might pass to see if subsequent lines
+                    # continue the list or if this blank line should be outside.
+                    # If not in a list, append it if it's a meaningful part of the text.
+                    if not list_stack:  # If not in a list, append the blank line as text.
+                        result.append({"type": "text", "content": line})
+                    # If in a list, blank lines are tricky. They might be part of an item or separate items.
+                    # The original code skipped them if stripped == "".
+                    # Let's refine to append if it's part of list item's multiline content or separate.
+                    # This part of logic is complex and depends on precise DText rules.
+                    # A simple approach for now: if it's not a list item, and we are in a list,
+                    # it could be a text continuation or a separator.
+                    # The original code's `continue` for blank lines is preserved here for minimal change
+                    # to that specific aspect, focusing on the header issue.
+                    if stripped == "":  # Re-check stripped for the original continue logic
+                        continue
 
                 match = re.match(r"^(\*+)\s+(.*)", line)
                 if match:
                     level = len(match.group(1))
-                    raw = match.group(2)
-                    # take the raw string and re-run inline transforms
-                    content_nodes = process_ast_links(transform_text_links(raw))
+                    raw_content = match.group(2)
+                    # The content of the list item needs to be parsed.
+                    # Calling full parse_dtext_to_ast here can lead to problematic recursion
+                    # if parse_dtext_to_ast itself calls wrap_list_items.
+                    # Assuming parse_dtext_to_ast is designed to handle sub-parsing or
+                    # this is a known part of the existing design.
+                    content_nodes = parse_dtext_to_ast(raw_content)
                     push_li_to_stack(level, content_nodes)
-                else:
-                    # If we're in a list, keep this text _inside_ the last <li>
+                else:  # Not a list item line
                     if list_stack:
-                        append_to_current_li({"type": "text", "content": line})
+                        # This line is part of the current list item's content
+                        # It should be parsed for inline DText.
+                        parsed_line_nodes = parse_dtext_to_ast(line)  # Similar concern as above
+                        for pl_node in parsed_line_nodes:
+                            append_to_current_li(pl_node)
                     else:
                         result.append({"type": "text", "content": line})
-        else:
-            # First, recurse into its children so they're fixed up
+        else:  # Non-text node (e.g. header, quote, table element)
+            is_header_node = node["type"] in {"h1", "h2", "h3", "h4", "h5", "h6"}
+
+            if is_header_node:
+                # If the current node is a header, it signifies the end of any preceding list.
+                # Clear the list_stack to ensure the header is not appended to a list item.
+                list_stack.clear()
+
+            # Recursively call wrap_list_items for the children of the current node.
+            # This is to correctly handle lists that might be nested within this node's content
+            # (e.g., a list inside a blockquote).
             if "children" in node:
                 node["children"] = wrap_list_items(node["children"])
-            # Then, if we're inside a list, it belongs _inside_ the last <li>
-            if list_stack:
+
+            # After processing children and potentially clearing list_stack (if it was a header):
+            if list_stack and not is_header_node:
+                # If list_stack is still active (meaning we are in a list context initiated by a prior text node)
+                # AND the current node is NOT a header, then this node is part of the current list item.
                 append_to_current_li(node)
             else:
+                # If list_stack is empty (either never started, or cleared by a header)
+                # OR if the current node IS a header,
+                # then append this node to the main result list.
                 result.append(node)
-
     return result
 
 
@@ -533,7 +572,7 @@ def load_dtext_input(source="txt", txt_path="dtextH.txt", json_path="wiki_pages.
 
 # "txt" or "json"
 #  project voltage 172159 # 11229 for ewiki
-dtext_input = load_dtext_input(source="json", target_id=46211)
+dtext_input = load_dtext_input(source="json", target_id=43047)
 # id 43047 for help:dtext 5655 for hatsune_miku; 46211 kancolle
 # 5883 tag groups
 # 29067 tag_group:backgrounds
