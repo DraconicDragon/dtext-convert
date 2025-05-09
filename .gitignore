@@ -2,10 +2,11 @@
 *.txt
 *.json
 *.html
+*.css
+*.csv
 !comparison_page.html
 !dtext_wiki_page.html
 
-*.css
 test.py
 main2.py
 main3.py
