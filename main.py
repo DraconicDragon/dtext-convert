@@ -421,7 +421,7 @@ def parse_dtext_to_ast(dtext):
     for key, original in placeholder_map.items():
         dtext = dtext.replace(key, original)
 
-    header_pattern = re.compile(r"^(h[123456])(#[\w-]+)?\.\s+(.*?)(?=\s*$|\n|$)", re.MULTILINE)
+    header_pattern = re.compile(r"^(h[123456])(#[\w-]+)?\.\s*(.*?)(?=\s*$|\n|$)", re.MULTILINE)
     tag_pattern = re.compile(r"\[(/?)(b|i|u|s|tn|spoilers|code|nodtext|expand|quote)(?:=([^\]]+))?\]")
     br_pattern = re.compile(r"\[br\]")  # linebreak
     hr_pattern = re.compile(r"\[hr\]")  # Horizon
