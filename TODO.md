@@ -2,6 +2,7 @@
 
 ## General
 - [x] Fix that headers (and maybe more) are part of a `li` if header comes after it
+  - [ ] Find out if this is going to be an issue for inner `li`/`ul` tags
 - [ ] change css for better mobile support (tables mainly)
 - [x] Handle links that refer to IDs (they should link to an anchor on the active page, not Danbooru)
   - [x] ID Links not scrolling to the id thingy
