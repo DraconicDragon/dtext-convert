@@ -21,7 +21,11 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 # Construct the full path to the CSV file
 csv_path = os.path.join(script_dir, "e6tags.csv")
 
+# Load CSV into DataFrame
 e6_tags_df = pd.read_csv(csv_path)
+
+# Create dictionary for faster lookups - maps tag names to (id, category) tuples
+tag_dict = dict(zip(e6_tags_df['name'], zip(e6_tags_df['id'], e6_tags_df['category'])))
 
 
 def extract_text(nodes):
@@ -70,7 +74,7 @@ def parse_li(li_node):
     entry["name"] = name
 
     try:
-        tag_info = get_tag_info(e6_tags_df, name)  # 0: id; 1: category_id
+        tag_info = tag_dict.get(name, (None, None))  # 0: id; 1: category_id
         entry["id"] = int(tag_info[0])
         entry["cat_id"] = int(tag_info[1])
     except (TypeError, ValueError):
