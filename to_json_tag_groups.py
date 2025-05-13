@@ -81,7 +81,7 @@ def parse_li(li_node, is_index_tg=False):
             tag_info = tag_dict.get(name, (None, None, None))  # 0: id; 1: category_id; 2: post_count
 
             if tag_info[2] == 0:  # ignore tags with 0 posts
-                print(f"- \033[1m\033[93mTag '\033[94m{name}\033[93m' has 0 posts, skipping...\033[0m")
+                print(f"- \033[1m\033[93mTag '\033[94m{name}\033[93m' has 0 posts, marking invalid\033[0m")
                 entry["id"] = -1
                 # entry["cat_id"] = -1
                 entry["invalid_reason"] = "0 posts"  # NOTE: probably temporary thing
