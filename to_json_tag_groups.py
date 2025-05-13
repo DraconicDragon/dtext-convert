@@ -42,7 +42,7 @@ def extract_text(nodes):
     return "".join(parts)
 
 
-def parse_li(li_node):
+def parse_li(li_node, is_index_tg=False):
     """
     Parse an <li> node into a tag entry:
     - name, link (from <a>)
@@ -67,23 +67,24 @@ def parse_li(li_node):
     #     return None
 
     # Detect markers in the name itself
-    for marker, field in MARKERS.items():
-        if marker in name:
-            entry[field] = True
-            name = name.replace(marker, "")
+    # for marker, field in MARKERS.items():
+    #     if marker in name:
+    #         entry[field] = True
+    #         name = name.replace(marker, "")
 
-    name = name.replace(" ", "_").lower()
+    if not is_index_tg:
+        name = name.replace(" ", "_").lower()
+
+        try:
+            tag_info = tag_dict.get(name, (None, None))  # 0: id; 1: category_id
+            entry["id"] = int(tag_info[0])
+            entry["cat_id"] = int(tag_info[1])
+        except (TypeError, ValueError):
+            print(f"\033[1m\033[91mTag '\033[94m{name}\033[91m' not found or invalid in e6tags.csv\033[0m")
+            entry["id"] = -1  # default value to set if none so key exists but easier to see that its invalid
+            entry["cat_id"] = -1
 
     entry["name"] = name
-
-    try:
-        tag_info = tag_dict.get(name, (None, None))  # 0: id; 1: category_id
-        entry["id"] = int(tag_info[0])
-        entry["cat_id"] = int(tag_info[1])
-    except (TypeError, ValueError):
-        print(f"\033[1m\033[91mTag '\033[94m{name}\033[91m' not found or invalid in e6tags.csv\033[0m")
-        entry["id"] = -1  # default value to set if none so key exists but easier to see that its invalid
-        entry["cat_id"] = -1
 
     # 2) Note: any text nodes after the <a>, with markers stripped
     note_nodes = []
@@ -92,17 +93,22 @@ def parse_li(li_node):
         if c is a:
             found_a = True
             continue
+
         if found_a and c.get("type") == "text":
             raw = c.get("content", "")
             # detect markers in raw
             for marker, field in MARKERS.items():
                 if marker in raw:
                     entry[field] = True
+
             # strip markers from raw for note
             cleaned = raw
+
             for m in MARKERS.keys():
                 cleaned = cleaned.replace(m, "")
+
             note_nodes.append(cleaned)
+
     if note_nodes:
         note = "".join(note_nodes).strip()
         if note:
@@ -118,7 +124,7 @@ def parse_li(li_node):
         for sub_li in sub_ul.get("children", []):
             if sub_li.get("type") != "li":
                 continue
-            sub_entry = parse_li(sub_li)
+            sub_entry = parse_li(sub_li, is_index_tg=is_index_tg)
             if sub_entry:
                 # Use index as key instead of entry name
                 subgroup[str(index)] = sub_entry
@@ -153,21 +159,35 @@ def ast_to_tag_groups(ast, dtext_title):
             for li in node.get("children", []):
                 if li.get("type") != "li":
                     continue
-                entry = parse_li(li)
+
+                entry = parse_li(li, is_index_tg=(dtext_title == "tag_group:index"))
+
                 if entry:
                     # Use index as key instead of entry name
                     current["tags"][str(index)] = entry
                     index += 1
 
     # Convert list of groups into a dict with numerical indices
-    output = {
-        "title": "tag_group:optics",
-        "groups": {
-            str(index): {"group_name": group["group_name"], "tags": group["tags"]}
-            for index, group in enumerate(groups)
-        },
-    }
+    if dtext_title == "tag_group:index":
+        output = {
+            "title": f"{dtext_title}",
+            "categories": {
+                str(index): {"category_name": group["group_name"], "groups": group["tags"]}
+                for index, group in enumerate(groups)
+            },
+        }  # index tag group gets special key names to differentiate it more
+
+    else:
+        output = {
+            "title": f"{dtext_title}",
+            "groups": {
+                str(index): {"group_name": group["group_name"], "tags": group["tags"]}
+                for index, group in enumerate(groups)
+            },
+        }
+
     return output
+
 
 def main_tag_groups(dtext_title):
     ast = load_json("ast_output.json")
@@ -186,4 +206,4 @@ def main_tag_groups(dtext_title):
 
 
 if __name__ == "__main__":
-    main_tag_groups(dtext_title="thingies")
+    main_tag_groups("thingies")
