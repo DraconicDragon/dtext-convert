@@ -100,7 +100,7 @@ def parse_li(li_node, is_index_tg=False):
             entry["endpoint"] = endpoint
 
     entry["name"] = name
-    
+
     # 2) Note: any text nodes after the <a>, with markers stripped
     note_nodes = []
     found_a = False
@@ -151,7 +151,7 @@ def parse_li(li_node, is_index_tg=False):
     return entry
 
 
-def ast_to_tag_groups(ast, dtext_title):
+def ast_to_tag_groups(ast, dtext_title, page_id):
     """
     Walk the top-level AST:
     - on header: start new group
@@ -186,6 +186,7 @@ def ast_to_tag_groups(ast, dtext_title):
     if dtext_title in ("tag_group:index", "tag_groups"):
         output = {
             "title": f"{dtext_title}",
+            "id": page_id,
             "categories": {
                 str(index): {"category_name": group["group_name"], "groups": group["tags"]}
                 for index, group in enumerate(groups)
@@ -195,6 +196,7 @@ def ast_to_tag_groups(ast, dtext_title):
     else:
         output = {
             "title": f"{dtext_title}",
+            "id": page_id,
             "groups": {
                 str(index): {"group_name": group["group_name"], "tags": group["tags"]}
                 for index, group in enumerate(groups)
@@ -204,9 +206,9 @@ def ast_to_tag_groups(ast, dtext_title):
     return output
 
 
-def main_tag_groups(dtext_title):
+def main_tag_groups(dtext_title, page_id=-1):
     ast = load_json("ast_output.json")
-    tag_groups = ast_to_tag_groups(ast, dtext_title)
+    tag_groups = ast_to_tag_groups(ast, dtext_title, page_id=page_id)
     dtext_title = dtext_title.replace("tag_group:", "")
 
     new_tag_groups = {}
@@ -218,7 +220,6 @@ def main_tag_groups(dtext_title):
     if "groups" not in tag_groups:
         print(f"- No 'groups' key in {dtext_title} found, skipping.")
         return  # Abort the function if there's no "groups"
-
 
     save_json(tag_groups, f"tag_groups/{dtext_title}.json")
     print(f"- Wrote {dtext_title} tag group to tag_groups/{dtext_title}.json\n")

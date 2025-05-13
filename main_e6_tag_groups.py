@@ -578,7 +578,7 @@ with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
             save_json(ast, output_filename)
 
             # runa(dtext_page[0])
-            main_tag_groups(dtext_page[0])
+            main_tag_groups(dtext_page[0], page_id=target_id)
 
             # Increment counter and check if we've reached the limit
             count += 1
