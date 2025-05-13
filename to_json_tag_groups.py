@@ -1,4 +1,9 @@
 import json
+import os
+
+import pandas as pd
+
+from tag_id_linker import get_tag_info
 
 MARKERS = {
     "*": "incomplete",  # a tag_group is incomplete or hasn't been updated in over 3 months
@@ -9,6 +14,15 @@ MARKERS = {
 # todo: doesnt handle subsections yet
 # NOTE: well maybe i can do this in ast already, but need to find a way to have it inside the li maybe
 # or some other way
+
+# Get the directory of the current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the full path to the CSV file
+csv_path = os.path.join(script_dir, "e6tags.csv")
+
+e6_tags_df = pd.read_csv(csv_path)
+
 
 def extract_text(nodes):
     """Concatenate all text content from a list of AST nodes."""
@@ -38,7 +52,12 @@ def parse_li(li_node):
         print("No <a> tag found in li_node")
         return None
     name = extract_text(a["children"]).strip()
-    href = a.get("attrs", {}).get("href")
+
+    # possibly leads to false positives but idk
+    # actually its probably easier to give this IDs of -1
+    # and then look over them to see if they are really invalid
+    # if "🔗" in name:
+    #     return None
 
     # Detect markers in the name itself
     for marker, field in MARKERS.items():
@@ -46,9 +65,18 @@ def parse_li(li_node):
             entry[field] = True
             name = name.replace(marker, "")
 
+    name = name.replace(" ", "_").lower()
+
     entry["name"] = name
-    if href:
-        entry["link"] = href
+
+    try:
+        tag_info = get_tag_info(e6_tags_df, name)  # 0: id; 1: category_id
+        entry["id"] = int(tag_info[0])
+        entry["cat_id"] = int(tag_info[1])
+    except (TypeError, ValueError):
+        print(f"\033[1m\033[91mTag '\033[94m{name}\033[91m' not found or invalid in e6tags.csv\033[0m")
+        entry["id"] = -1  # default value to set if none so key exists but easier to see that its invalid
+        entry["cat_id"] = -1
 
     # 2) Note: any text nodes after the <a>, with markers stripped
     note_nodes = []
@@ -71,18 +99,23 @@ def parse_li(li_node):
     if note_nodes:
         note = "".join(note_nodes).strip()
         if note:
+            if note.startswith("- "):
+                note = note[2:]
             entry["note"] = note
 
     # 3) Subgroup: a nested <ul> inside this <li>
     sub_ul = next((c for c in children if c.get("type") == "ul"), None)
     if sub_ul:
         subgroup = {}
+        index = 0  # Initialize counter for numeric keys
         for sub_li in sub_ul.get("children", []):
             if sub_li.get("type") != "li":
                 continue
             sub_entry = parse_li(sub_li)
             if sub_entry:
-                subgroup[sub_entry["name"]] = sub_entry
+                # Use index as key instead of entry name
+                subgroup[str(index)] = sub_entry
+                index += 1
         if subgroup:
             entry["subgroup"] = subgroup
 
@@ -109,12 +142,15 @@ def ast_to_tag_groups(ast):
             print("Found header:", title)
         elif ntype == "ul" and current is not None:
             # parse each <li> into an entry
+            index = 0  # Initialize counter for numeric keys
             for li in node.get("children", []):
                 if li.get("type") != "li":
                     continue
                 entry = parse_li(li)
                 if entry:
-                    current["tags"][entry["name"]] = entry
+                    # Use index as key instead of entry name
+                    current["tags"][str(index)] = entry
+                    index += 1
 
     # Convert list of {title,tags} into a dict-of-dicts
     output = {g["title"]: g["tags"] for g in groups}
@@ -124,6 +160,14 @@ def ast_to_tag_groups(ast):
 def main():
     ast = load_json("ast_output.json")
     tag_groups = ast_to_tag_groups(ast)
+
+    new_tag_groups = {}
+    for group_title, group_tags in tag_groups.items():
+        if group_tags:
+            new_tag_groups[group_title] = group_tags
+
+    tag_groups = new_tag_groups
+
     save_json(tag_groups, "tag_groups.json")
     print(f"Wrote {len(tag_groups)} groups to tag_groups.json")
 
