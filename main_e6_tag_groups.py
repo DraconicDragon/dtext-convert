@@ -544,25 +544,46 @@ def parse_dtext_to_ast(dtext):
     return process_ast_links(wrap_list_items(stack[0]))
 
 
-# "txt", "json", or "csv"
-# project voltage 172159 # 11229 for ewiki
-dtext_page = load_dtext_input(source="csv", target_id=10866)
-# id 43047 for help:dtext 5655 for hatsune_miku; 46211 kancolle
-# 5883 tag groups
-# 29067 tag_group:backgrounds
-# e6: 10866 optics, 1671 tg index, 4 e621:index
+# Read the CSV file and find tag group pages
 
-dtext_input = dtext_page[1]  # 0 = title, 1 = page content
+# Define a counter for limiting to 4 tag groups
+count = 0
+MAX_TAG_GROUPS = 1
 
-finished_dtext = main_preprocess(dtext_input)
+# Open the CSV file and process tag group pages
+with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        # Check if the title contains "tag_group:"
+        if "tag_group:" in row["title"]:
+            # Get the ID from the row
+            target_id = int(row["id"])
+            print(f"Processing tag group: {row['title']} (ID: {target_id})")
 
+            # Process this tag group page
+            # dtext_page = load_dtext_input(source="csv", target_id=target_id)
+            dtext_page = load_dtext_input(source="json", target_id=43047)
+            dtext_input = dtext_page[1]  # 0 = title, 1 = page content
 
-# Parse the modified DText string into an Abstract Syntax Tree (AST)
-ast = parse_dtext_to_ast(finished_dtext)
+            finished_dtext = main_preprocess(dtext_input)
+            print(finished_dtext)
 
+            # Parse the modified DText string into an Abstract Syntax Tree (AST)
+            ast = parse_dtext_to_ast(finished_dtext)
 
-# Save as JSON
-save_json(ast, "ast_output.json")
+            # Save as JSON
+            # output_filename = f"ast_output_{target_id}.json"
+            output_filename = "ast_output.json"
+            save_json(ast, output_filename)
 
-runa(dtext_page[0])
-main_tag_groups(dtext_page[0])
+            runa(dtext_page[0])
+            main_tag_groups(dtext_page[0])
+
+            # Increment counter and check if we've reached the limit
+            count += 1
+            if count >= MAX_TAG_GROUPS:
+                break
+
+# If no tag groups were found, print a message
+if count == 0:
+    print("No tag group pages found in the CSV file.")
