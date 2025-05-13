@@ -14,6 +14,11 @@ def load_json(filename):
 def save_json(data, filename):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(script_dir, filename)
+    dir_path = os.path.dirname(file_path)
+
+    # Ensure the directory exists
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
