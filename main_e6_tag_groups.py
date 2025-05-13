@@ -285,7 +285,7 @@ def transform_text_links(text):
                     "type": "a",
                     "attrs": {
                         "href": "https:/e621.net/wiki_pages/"
-                        + page_section[0].replace(" ", "_").lower()
+                        + page_section[0].lower().replace(" ", "_")
                         + (("#dtext-" + page_section[1].lower()) if page_section[1] else "")
                     },
                     "children": [text_node(display_text)],
@@ -294,7 +294,8 @@ def transform_text_links(text):
                 # Split page#section if exists
                 m.group(1).strip().split("#") + [None],
                 (
-                    re.sub(r"\s*\([^)]*\)", "", m.group(1).split("#")[0].strip()).strip()
+                    # Only strip parentheticals if preceded by whitespace
+                    re.sub(r"\s\([^)]*\)", "", m.group(1).split("#")[0].strip()).strip()
                     if not (m.group(3) and m.group(3).strip())
                     else m.group(3).strip()
                 ),
