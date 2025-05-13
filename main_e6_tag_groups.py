@@ -592,7 +592,7 @@ with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
             if TARGET_ID_OVERRIDE is None and count >= MAX_TAG_GROUPS:
                 break
 
-# todo gender 12159 doesnt work aaa idk why im tired
+# todo gender 12159 doesnt work aaa idk why, im tired
 # If no tag groups were found, print a message
 if count == 0:
     print("No tag group pages found in the CSV file.")
