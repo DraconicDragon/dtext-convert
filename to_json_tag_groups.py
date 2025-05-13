@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import pandas as pd
 
@@ -21,14 +22,14 @@ MARKERS = {
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Construct the full path to the CSV file
-csv_path = os.path.join(script_dir, "e6tags.csv")
+csv_path = os.path.join(script_dir, "tags-2025-05-13.csv")
 
 # Load CSV into DataFrame
 e6_tags_df = pd.read_csv(csv_path)
 
 # Create dictionary for faster lookups - maps tag names to (id, category) tuples
 # Time complexity of O(1) for lookups while pandas DF or list is O(n) where n = num. of rows
-tag_dict = dict(zip(e6_tags_df["name"], zip(e6_tags_df["id"], e6_tags_df["category"])))
+tag_dict = dict(zip(e6_tags_df["name"], zip(e6_tags_df["id"], e6_tags_df["category"], e6_tags_df["post_count"])))
 
 
 def extract_text(nodes):
@@ -65,6 +66,7 @@ def parse_li(li_node, is_index_tg=False):
     # and then look over them to see if they are really invalid
     # if "🔗" in name:
     #     return None
+    # todo: either use this or check for non-hyperlinked text appearing first in li
 
     # Detect markers in the name itself
     # for marker, field in MARKERS.items():
@@ -76,16 +78,29 @@ def parse_li(li_node, is_index_tg=False):
         name = name.replace(" ", "_").lower()
 
         try:
-            tag_info = tag_dict.get(name, (None, None))  # 0: id; 1: category_id
-            entry["id"] = int(tag_info[0])
-            entry["cat_id"] = int(tag_info[1])  # todo: maybe drop category id? not sure if useful
+            tag_info = tag_dict.get(name, (None, None, None))  # 0: id; 1: category_id; 2: post_count
+
+            if tag_info[2] == 0:  # ignore tags with 0 posts
+                print(f"- \033[1m\033[93mTag '\033[94m{name}\033[93m' has 0 posts, skipping...\033[0m")
+                entry["id"] = -1
+                # entry["cat_id"] = -1
+                entry["invalid_reason"] = "0 posts"  # NOTE: probably temporary thing
+            else:
+                entry["id"] = int(tag_info[0])
+                # entry["cat_id"] = int(tag_info[1])  # todo: maybe drop category id? not sure if useful
         except (TypeError, ValueError):
             print(f"- \033[1m\033[91mTag '\033[94m{name}\033[91m' not found or invalid in e6tags.csv\033[0m")
             entry["id"] = -1  # default value to set if none so key exists but easier to see that its invalid
-            entry["cat_id"] = -1
+            # entry["cat_id"] = -1
+            entry["invalid_reason"] = "not found/invalid tag"
+    else:
+        href = a.get("attrs", {}).get("href")
+        if href:
+            endpoint = re.sub(r".*?/wiki_pages", "", href)
+            entry["endpoint"] = endpoint
 
     entry["name"] = name
-
+    
     # 2) Note: any text nodes after the <a>, with markers stripped
     note_nodes = []
     found_a = False
@@ -192,6 +207,7 @@ def ast_to_tag_groups(ast, dtext_title):
 def main_tag_groups(dtext_title):
     ast = load_json("ast_output.json")
     tag_groups = ast_to_tag_groups(ast, dtext_title)
+    dtext_title = dtext_title.replace("tag_group:", "")
 
     new_tag_groups = {}
     for group_title, group_tags in tag_groups.items():
@@ -199,8 +215,8 @@ def main_tag_groups(dtext_title):
             new_tag_groups[group_title] = group_tags
 
     tag_groups = new_tag_groups
-    save_json(group_tags, f"tag_groups/{dtext_title.replace("tag_group:", "")}.json")
-    print(f"- Wrote {group_title} tag group to tag_groups/{dtext_title.replace("tag_group:", "")}.json\n")
+    save_json(tag_groups, f"tag_groups/{dtext_title}.json")
+    print(f"- Wrote {dtext_title} tag group to tag_groups/{dtext_title}.json\n")
 
 
 if __name__ == "__main__":
