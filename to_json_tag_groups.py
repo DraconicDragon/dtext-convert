@@ -3,10 +3,14 @@ import os
 
 import pandas as pd
 
+from file_operations import load_json, save_json
+
 MARKERS = {
+    # currently the markers are for e621 unless noted otherwise (e.g.: "deprecated")
     "*": "incomplete",  # a tag_group is incomplete or hasn't been updated in over 3 months
     "[!]": "rare",  # used on <10 posts as of date above
     "[?]": "uncertain",  # ***possibly not valid***, but have >10 post count
+    "(deprecated)": "deprecated",  # tag is deprecated (for danbooru)
 }
 
 # todo: doesnt handle subsections yet
@@ -170,19 +174,10 @@ def main():
             new_tag_groups[group_title] = group_tags
 
     tag_groups = new_tag_groups
-
+    # todo: save in folder structure similar to tag group structure
+    # and make file name the title of the dtext tag group page
     save_json(tag_groups, "tag_groups.json")
     print(f"Wrote {len(tag_groups)} groups to tag_groups.json")
-
-
-def load_json(filename):
-    with open(filename, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def save_json(data, filename):
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":

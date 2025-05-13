@@ -3,12 +3,12 @@ import json
 import os
 
 
-def read_file(filename):
+def load_json(filename):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(script_dir, filename)
 
     with open(file_path, "r", encoding="utf-8") as f:
-        return f.read()
+        return json.load(f)
 
 
 def save_json(data, filename):
