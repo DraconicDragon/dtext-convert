@@ -78,9 +78,9 @@ def parse_li(li_node, is_index_tg=False):
         try:
             tag_info = tag_dict.get(name, (None, None))  # 0: id; 1: category_id
             entry["id"] = int(tag_info[0])
-            entry["cat_id"] = int(tag_info[1]) # todo: maybe drop category id? not sure if useful
+            entry["cat_id"] = int(tag_info[1])  # todo: maybe drop category id? not sure if useful
         except (TypeError, ValueError):
-            print(f"\033[1m\033[91mTag '\033[94m{name}\033[91m' not found or invalid in e6tags.csv\033[0m")
+            print(f"- \033[1m\033[91mTag '\033[94m{name}\033[91m' not found or invalid in e6tags.csv\033[0m")
             entry["id"] = -1  # default value to set if none so key exists but easier to see that its invalid
             entry["cat_id"] = -1
 
@@ -199,10 +199,8 @@ def main_tag_groups(dtext_title):
             new_tag_groups[group_title] = group_tags
 
     tag_groups = new_tag_groups
-    # todo: save in folder structure similar to tag group structure
-    # and make file name the title of the dtext tag group page
-    save_json(tag_groups, "tag_groups.json")
-    print(f"Wrote {dtext_title} tag group to tag_groups.json")
+    save_json(group_tags, f"tag_groups/{dtext_title.replace("tag_group:", "")}.json")
+    print(f"- Wrote {group_title} tag group to tag_groups/{dtext_title.replace("tag_group:", "")}.json\n")
 
 
 if __name__ == "__main__":
