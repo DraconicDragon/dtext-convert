@@ -545,11 +545,13 @@ def parse_dtext_to_ast(dtext):
 
 # "txt", "json", or "csv"
 # project voltage 172159 # 11229 for ewiki
-dtext_input = load_dtext_input(source="csv", target_id=10866)
+dtext_page = load_dtext_input(source="csv", target_id=10866)
 # id 43047 for help:dtext 5655 for hatsune_miku; 46211 kancolle
 # 5883 tag groups
 # 29067 tag_group:backgrounds
 # e6: 10866 optics, 1671 tg index, 4 e621:index
+
+dtext_input = dtext_page[1]  # 0 = title, 1 = page content
 
 finished_dtext = main_preprocess(dtext_input)
 
@@ -561,4 +563,4 @@ ast = parse_dtext_to_ast(finished_dtext)
 # Save as JSON
 save_json(ast, "ast_output.json")
 
-runa()
+runa(dtext_page[0])

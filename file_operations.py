@@ -29,19 +29,22 @@ def load_dtext_input(
     if source == "txt":
         with open(txt_path, "r", encoding="utf-8") as f:
             return f.read()
+
     elif source == "json":
         with open(json_path, "r", encoding="utf-8") as f:
             pages = json.load(f)
         for page in pages:
             if page.get("id") == target_id:
-                return page.get("body", "")
+                return (page.get("title", ""), page.get("body", ""))
         raise ValueError(f"No entry found with id={target_id}")
+
     elif source == "csv":
         with open(csv_path, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if int(row.get("id", -1)) == target_id:
-                    return row.get("body", "")
+                    return (row.get("title", ""), row.get("body", ""))
         raise ValueError(f"No entry found with id={target_id}")
+
     else:
         raise ValueError("Invalid source option. Use 'txt', 'json', or 'csv'.")

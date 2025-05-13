@@ -150,12 +150,22 @@ embed_css = False
 css_filename = "styles.css"
 
 
-def runa():
+def runa(dtext_title = ""):
 
     ast = load_json("ast_output.json")
 
     # Convert AST to HTML content (this is the inner HTML, e.g. content inside <body>)
     inner_html = ast_to_html(ast)
+
+    inner_html = "<div id=\"wiki-page-body\">" + inner_html + "</div>"
+    
+    # page title at the top of page
+    # todo: barebones, needs hyperlink and probs other stuff
+    if dtext_title != "":
+        title_html = f"<h1 id=\"wiki-page-title\">{dtext_title}</h1>"
+        inner_html = title_html + inner_html
+
+    # print(inner_html)
 
     # Build a full HTML document using our template
     full_html = generate_full_html(inner_html, embed_css, css_filename, css_content=CSS_CONTENT)
@@ -171,4 +181,4 @@ def runa():
 
 
 if __name__ == "__main__":
-    runa()
+    runa("DText Title")
