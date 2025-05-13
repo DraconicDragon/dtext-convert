@@ -7,6 +7,7 @@ from random_color_print import get_colored_text
 from tg_preprocess import main_preprocess
 from to_html import runa
 from to_json_tag_groups import main_tag_groups
+import sys
 
 
 def wrap_list_items(ast):
@@ -543,11 +544,12 @@ def parse_dtext_to_ast(dtext):
 
     return process_ast_links(wrap_list_items(stack[0]))
 
-
 # Read the CSV file and find tag group pages
 # Define a counter for limiting to 4 tag groups
 count = 0
-MAX_TAG_GROUPS = 5
+MAX_TAG_GROUPS = 35
+
+TARGET_ID_OVERRIDE = None
 
 # Open the CSV file and process tag group pages
 with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
@@ -557,6 +559,11 @@ with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
         if "tag_group:" in row["title"]:
             # Get the ID from the row
             target_id = int(row["id"])
+
+            # If a target ID override is provided, only process that ID
+            if TARGET_ID_OVERRIDE is not None and target_id != TARGET_ID_OVERRIDE:
+                continue
+
             colored_title = get_colored_text(row["title"])
             print(f"Processing tag group: {colored_title} (ID: {target_id})")
 
@@ -567,7 +574,7 @@ with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
 
             finished_dtext = main_preprocess(dtext_input)
             #finished_dtext = dtext_input
-            # print(finished_dtext)
+            #print(finished_dtext)
 
             # Parse the modified DText string into an Abstract Syntax Tree (AST)
             ast = parse_dtext_to_ast(finished_dtext)
@@ -582,9 +589,10 @@ with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
 
             # Increment counter and check if we've reached the limit
             count += 1
-            if count >= MAX_TAG_GROUPS:
+            if TARGET_ID_OVERRIDE is None and count >= MAX_TAG_GROUPS:
                 break
 
+# todo gender 12159 doesnt work aaa idk why im tired
 # If no tag groups were found, print a message
 if count == 0:
     print("No tag group pages found in the CSV file.")
