@@ -22,7 +22,7 @@ def save_json(data, filename):
 def load_dtext_input(
     source="txt",
     txt_path="dtextH.txt",
-    json_path="ewiki_pages.json",
+    json_path="wiki_pages.json",
     csv_path="wiki_pages-2025-05-01.csv",
     target_id=43047,
 ):
