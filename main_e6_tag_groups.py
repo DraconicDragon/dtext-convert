@@ -566,6 +566,7 @@ with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
             dtext_input = dtext_page[1]  # 0 = title, 1 = page content
 
             finished_dtext = main_preprocess(dtext_input)
+            #finished_dtext = dtext_input
             # print(finished_dtext)
 
             # Parse the modified DText string into an Abstract Syntax Tree (AST)
