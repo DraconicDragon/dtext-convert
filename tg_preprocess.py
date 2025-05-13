@@ -1,7 +1,7 @@
-
 import re
 
 # order is important
+
 
 def filter_sections(text, exclude_keywords=None):
     if exclude_keywords is None:
@@ -78,6 +78,29 @@ def remove_gap_between_sections(text):
 
     return re.sub(pattern, _repl, text)
 
+
+# if there is an opening section tag but no header in between that and the first ul/li item then turn the section's title/string into a "h4. header"
+def add_missing_headers(text):
+    pattern = re.compile(r"\[section(?:[=,]expanded=|=)([^\]:]+)\](.*?)((?=\[section[^\]]*\])|$)", flags=re.DOTALL)
+
+    def repl(m):
+        section_title = m.group(1).strip()
+        section_content = m.group(2).strip()
+        # Check if there is no header before the first ul/li
+        if not re.search(r"^h[123456]\.", section_content, flags=re.MULTILINE) and re.search(
+            r"^\*+", section_content, flags=re.MULTILINE
+        ):
+            # Add an h4 header with the section title
+            return f"h4. {section_title}\n{section_content}"
+        return m.group(0)
+
+    text = re.sub(pattern, repl, text)
+
+    # Ensure a newline between a closing section tag and a following h4 tag
+    text = re.sub(r"(\[/section\])(h4\.)", r"\1\n\2", text)
+    return text
+
+
 def main_preprocess(dtext_input):
     dtext_input = filter_sections(dtext_input)
     # dtext_input = remove_unclosed_section_content(dtext_input)
@@ -91,31 +114,7 @@ def main_preprocess(dtext_input):
     # everything from last [/section] to bottom
     dtext_input = re.sub(r"(?s)(.*\[/section\]).*$", r"\1", dtext_input)
 
-
-    # if there is an opening section tag but no header in between that and the first ul/li item then turn the section's title/string into a "h4. header"
-    def add_missing_headers(text):
-        pattern = re.compile(r"\[section(?:[=,]expanded=|=)([^\]:]+)\](.*?)((?=\[section[^\]]*\])|$)", flags=re.DOTALL)
-
-        def repl(m):
-            section_title = m.group(1).strip()
-            section_content = m.group(2).strip()
-            # Check if there is no header before the first ul/li
-            if not re.search(r"^h[123456]\.", section_content, flags=re.MULTILINE) and re.search(
-                r"^\*+", section_content, flags=re.MULTILINE
-            ):
-                # Add an h4 header with the section title
-                return f"h4. {section_title}\n{section_content}"
-            return m.group(0)
-
-        text = re.sub(pattern, repl, text)
-
-        # Ensure a newline between a closing section tag and a following h4 tag
-        text = re.sub(r"(\[/section\])(h4\.)", r"\1\n\2", text)
-        return text
-
-
     dtext_input = add_missing_headers(dtext_input)
-
 
     # remove all [section] tags
     dtext_input = re.sub(r"\[section[^\]]*\]", "", dtext_input)
