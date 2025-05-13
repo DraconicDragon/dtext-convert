@@ -7,6 +7,7 @@ from file_operations import load_dtext_input, save_json
 from id_link_map import ID_LINK_MAP
 from tg_preprocess import main_preprocess
 from to_html import runa
+from to_json_tag_groups import main_tag_groups
 
 
 def wrap_list_items(ast):
@@ -564,3 +565,4 @@ ast = parse_dtext_to_ast(finished_dtext)
 save_json(ast, "ast_output.json")
 
 runa(dtext_page[0])
+main_tag_groups(dtext_page[0])
