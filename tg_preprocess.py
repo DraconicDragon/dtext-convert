@@ -10,8 +10,10 @@ def filter_sections(text, exclude_keywords=None):
             "to add",
             "contents",
             "forum discussions",
+            "forum discussion",
             "see also",
             "also see",
+            "guidelines",
         ]
 
     # Find every “[section…]” or “[\/section]” tag in order
@@ -40,6 +42,44 @@ def filter_sections(text, exclude_keywords=None):
     # Remove all marked spans (from end→start so offsets don’t shift)
     for a, b in sorted(removals, reverse=True):
         text = text[:a] + text[b:]
+
+    return text
+
+
+def filter_headers(text, exclude_keywords=None):
+    """
+    Filters out headers and their content based on keywords.
+    Similar to filter_sections but works on h4/h3/etc headers.
+    """
+    if exclude_keywords is None:
+        exclude_keywords = [
+            "contents",
+            # "see also",
+            # "also see",
+            # "navigation",
+            # "table of contents",
+            # "index",
+            # "related tags",
+        ]
+
+    # Find all headers and their content up to the next header
+    header_pattern = re.compile(r"(h[1-6]\.[^\n]+)[\s\n]*(.*?)(?=h[1-6]\.|\Z)", re.DOTALL)
+
+    # Track positions to remove
+    removals = []
+
+    for match in header_pattern.finditer(text):
+        header = match.group(1).strip().lower()
+        header_start = match.start()
+        section_end = match.end()
+
+        # Check if this header contains any excluded keywords
+        if any(keyword in header for keyword in exclude_keywords):
+            removals.append((header_start, section_end))
+
+    # Remove all marked spans (from end→start so offsets don't shift)
+    for start, end in sorted(removals, reverse=True):
+        text = text[:start] + text[end:]
 
     return text
 
@@ -100,41 +140,78 @@ def add_missing_headers(text):
     text = re.sub(r"(\[/section\])(h4\.)", r"\1\n\2", text)
     return text
 
+
 # NOTE: this has like 0 actual testing on it and if it misses something/deletes too much then idk
 # borked i guess?
 def main_preprocess(dtext_input):
     # First apply basic filtering
     dtext_input = filter_sections(dtext_input)
+    # dtext_input = filter_headers(dtext_input)
     dtext_input = add_missing_headers(dtext_input)
-    
-    # Extract only the actual tag group sections (headers followed by bullet lists with wiki links)
+
+    # Extract only the actual tag group sections with more flexible header matching
     tag_sections = []
-    
-    # Find all h4 headers and content sections
-    header_pattern = re.compile(r"(h4\..*?:)[\s\n]*(.*?)(?=h[1-6]\.|\Z)", re.DOTALL)
-    
+
+    # Find h4 headers with any format, followed by bullet lists
+    header_pattern = re.compile(r"(h4\.[^\n]+)[\s\n]*(.*?)(?=h[1-6]\.|\Z)", re.DOTALL)
+
     for match in header_pattern.finditer(dtext_input):
         header = match.group(1).strip()
         content = match.group(2).strip()
-        
+
         # Only keep headers that have actual bullet list content with wiki links
-        if content and "*" in content and "[[" in content and "]]" in content:
+        # AND skip table of contents sections
+        if (
+            content
+            and "*" in content
+            and "[[" in content
+            and "]]" in content
+            and not header.lower().endswith("contents:")
+            and not "see also" in header.lower()
+        ):
             tag_sections.append(f"{header}\n\n{content}")
-    
+
     # Rejoin the extracted sections
     if tag_sections:
-        dtext_input = '\n\n'.join(tag_sections)
-    
+        dtext_input = "\n\n".join(tag_sections)
+    else:
+        # If no matching sections were found, check if we need a different approach
+        print("Warning: No tag sections found with standard pattern, trying alternative approach...")
+        # Try to find any sections with bullet points and wiki links
+        bullet_sections = re.findall(
+            r"(h4\.[^\n]+)[\s\n]*(\*+\s*\[\[.*?\]\].*?)(?=h[1-6]\.|\Z)", dtext_input, re.DOTALL
+        )
+        if bullet_sections:
+            tag_sections = [
+                f"{header}\n\n{content}"
+                for header, content in bullet_sections
+                if "contents:" not in header.lower() and "see also" not in header.lower()
+            ]
+            dtext_input = "\n\n".join(tag_sections)
+
     # Remove ALL section tags properly
     dtext_input = re.sub(r"\[section[^\]]*\]", "", dtext_input)  # Opening tags
-    dtext_input = re.sub(r"\[/section\]", "", dtext_input)       # Closing tags
-    
+    dtext_input = re.sub(r"\[/section\]", "", dtext_input)  # Closing tags
+
     # Remove anchor tags with no content
     dtext_input = re.sub(r"\n\[#[^\]]*\]\s*\n", "\n\n", dtext_input)
-    
+    dtext_input = re.sub(r"\[\#[^\]]*\]", "", dtext_input)  # Remove all anchor tags
+
+    # Clean up top navigation links
+    dtext_input = re.sub(r"\[\[#top\|\^\]\]", "", dtext_input)
+
     # Remove some simple stuff
     dtext_input = dtext_input.replace("`", "")
     dtext_input = dtext_input.replace("\r", "")
     dtext_input = dtext_input.replace("\u003ccolor\u003e", "")
-    
+
+    # Remove dtext color tags (including closing ones)
+    dtext_input = re.sub(r"\[/?color(?:=[^\]]*)?\]", "", dtext_input)
+
+    # remove this type of tag [[#1691|^]] and [[#top|^]]
+    # dtext_input = re.sub(r"\[\[#(?:top|\d+)\|\^\]\]", "", dtext_input)
+
+    # remove empty "[]"
+    dtext_input = re.sub(r"\[\]", "", dtext_input)
+
     return dtext_input
