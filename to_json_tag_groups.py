@@ -56,7 +56,7 @@ def parse_li(li_node):
     # 1) Find the <a> tag (should be first child)
     a = next((c for c in children if c.get("type") == "a"), None)
     if not a:
-        print("No <a> tag found in li_node")
+        # print("No <a> tag found in li_node")
         return None
     name = extract_text(a["children"]).strip()
 
@@ -126,11 +126,11 @@ def parse_li(li_node):
         if subgroup:
             entry["subgroup"] = subgroup
 
-    print("Parsed li entry:", entry)
+    # print("Parsed li entry:", entry)
     return entry
 
 
-def ast_to_tag_groups(ast):
+def ast_to_tag_groups(ast, dtext_title):
     """
     Walk the top-level AST:
     - on header: start new group
@@ -144,9 +144,9 @@ def ast_to_tag_groups(ast):
         # headers h1–h6
         if ntype.startswith("h") and ntype[1:].isdigit():
             title = extract_text(node.get("children", [])).strip()
-            current = {"title": title, "tags": {}}
+            current = {"group_name": title, "tags": {}}  # Use "group_name" for group name
             groups.append(current)
-            print("Found header:", title)
+            # print("Found header:", title)
         elif ntype == "ul" and current is not None:
             # parse each <li> into an entry
             index = 0  # Initialize counter for numeric keys
@@ -159,14 +159,19 @@ def ast_to_tag_groups(ast):
                     current["tags"][str(index)] = entry
                     index += 1
 
-    # Convert list of {title,tags} into a dict-of-dicts
-    output = {g["title"]: g["tags"] for g in groups}
+    # Convert list of groups into a dict with numerical indices
+    output = {
+        "title": "tag_group:optics",
+        "groups": {
+            str(index): {"group_name": group["group_name"], "tags": group["tags"]}
+            for index, group in enumerate(groups)
+        },
+    }
     return output
 
-
-def main():
+def main_tag_groups(dtext_title):
     ast = load_json("ast_output.json")
-    tag_groups = ast_to_tag_groups(ast)
+    tag_groups = ast_to_tag_groups(ast, dtext_title)
 
     new_tag_groups = {}
     for group_title, group_tags in tag_groups.items():
@@ -177,8 +182,8 @@ def main():
     # todo: save in folder structure similar to tag group structure
     # and make file name the title of the dtext tag group page
     save_json(tag_groups, "tag_groups.json")
-    print(f"Wrote {len(tag_groups)} groups to tag_groups.json")
+    print(f"Wrote {len(tag_groups)} (wrong number) groups to tag_groups.json")
 
 
 if __name__ == "__main__":
-    main()
+    main_tag_groups(dtext_title="thingies")
