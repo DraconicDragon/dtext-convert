@@ -1,10 +1,9 @@
 import csv
-import json
-import os
 import re
 
 from file_operations import load_dtext_input, save_json
 from id_link_map import ID_LINK_MAP
+from random_color_print import get_colored_text
 from tg_preprocess import main_preprocess
 from to_html import runa
 from to_json_tag_groups import main_tag_groups
@@ -546,10 +545,9 @@ def parse_dtext_to_ast(dtext):
 
 
 # Read the CSV file and find tag group pages
-
 # Define a counter for limiting to 4 tag groups
 count = 0
-MAX_TAG_GROUPS = 1
+MAX_TAG_GROUPS = 5
 
 # Open the CSV file and process tag group pages
 with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
@@ -559,15 +557,16 @@ with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
         if "tag_group:" in row["title"]:
             # Get the ID from the row
             target_id = int(row["id"])
-            print(f"Processing tag group: {row['title']} (ID: {target_id})")
+            colored_title = get_colored_text(row["title"])
+            print(f"Processing tag group: {colored_title} (ID: {target_id})")
 
             # Process this tag group page
-            # dtext_page = load_dtext_input(source="csv", target_id=target_id)
-            dtext_page = load_dtext_input(source="json", target_id=43047)
+            dtext_page = load_dtext_input(source="csv", target_id=target_id)
+            # dtext_page = load_dtext_input(source="csv", target_id=1657)
             dtext_input = dtext_page[1]  # 0 = title, 1 = page content
 
             finished_dtext = main_preprocess(dtext_input)
-            print(finished_dtext)
+            # print(finished_dtext)
 
             # Parse the modified DText string into an Abstract Syntax Tree (AST)
             ast = parse_dtext_to_ast(finished_dtext)
@@ -577,7 +576,7 @@ with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
             output_filename = "ast_output.json"
             save_json(ast, output_filename)
 
-            runa(dtext_page[0])
+            # runa(dtext_page[0])
             main_tag_groups(dtext_page[0])
 
             # Increment counter and check if we've reached the limit
