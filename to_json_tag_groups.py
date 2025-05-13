@@ -78,7 +78,7 @@ def parse_li(li_node, is_index_tg=False):
         try:
             tag_info = tag_dict.get(name, (None, None))  # 0: id; 1: category_id
             entry["id"] = int(tag_info[0])
-            entry["cat_id"] = int(tag_info[1])
+            entry["cat_id"] = int(tag_info[1]) # todo: maybe drop category id? not sure if useful
         except (TypeError, ValueError):
             print(f"\033[1m\033[91mTag '\033[94m{name}\033[91m' not found or invalid in e6tags.csv\033[0m")
             entry["id"] = -1  # default value to set if none so key exists but easier to see that its invalid
@@ -160,7 +160,7 @@ def ast_to_tag_groups(ast, dtext_title):
                 if li.get("type") != "li":
                     continue
 
-                entry = parse_li(li, is_index_tg=(dtext_title == "tag_group:index"))
+                entry = parse_li(li, is_index_tg=(dtext_title in ("tag_group:index", "tag_groups")))
 
                 if entry:
                     # Use index as key instead of entry name
@@ -168,7 +168,7 @@ def ast_to_tag_groups(ast, dtext_title):
                     index += 1
 
     # Convert list of groups into a dict with numerical indices
-    if dtext_title == "tag_group:index":
+    if dtext_title in ("tag_group:index", "tag_groups"):
         output = {
             "title": f"{dtext_title}",
             "categories": {
@@ -202,7 +202,7 @@ def main_tag_groups(dtext_title):
     # todo: save in folder structure similar to tag group structure
     # and make file name the title of the dtext tag group page
     save_json(tag_groups, "tag_groups.json")
-    print(f"Wrote {len(tag_groups)} (wrong number) groups to tag_groups.json")
+    print(f"Wrote {dtext_title} tag group to tag_groups.json")
 
 
 if __name__ == "__main__":
