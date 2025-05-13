@@ -3,8 +3,6 @@ import os
 
 import pandas as pd
 
-from tag_id_linker import get_tag_info
-
 MARKERS = {
     "*": "incomplete",  # a tag_group is incomplete or hasn't been updated in over 3 months
     "[!]": "rare",  # used on <10 posts as of date above
