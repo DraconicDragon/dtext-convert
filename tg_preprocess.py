@@ -100,30 +100,41 @@ def add_missing_headers(text):
     text = re.sub(r"(\[/section\])(h4\.)", r"\1\n\2", text)
     return text
 
-
+# NOTE: this has like 0 actual testing on it and if it misses something/deletes too much then idk
+# borked i guess?
 def main_preprocess(dtext_input):
+    # First apply basic filtering
     dtext_input = filter_sections(dtext_input)
-    # dtext_input = remove_unclosed_section_content(dtext_input)
-    dtext_input = remove_gap_between_sections(dtext_input)
-
-    # print(dtext_input)
-
-    # everything from top to first occurace of opening section tag
-    dtext_input = re.sub(r"(?s)^.*?(?=\[section[^\]]+\])", "", dtext_input)
-
-    # everything from last [/section] to bottom
-    dtext_input = re.sub(r"(?s)(.*\[/section\]).*$", r"\1", dtext_input)
-
     dtext_input = add_missing_headers(dtext_input)
-
-    # remove all [section] tags
-    dtext_input = re.sub(r"\[section[^\]]*\]", "", dtext_input)
-
-    # remove some simple stuff
+    
+    # Extract only the actual tag group sections (headers followed by bullet lists with wiki links)
+    tag_sections = []
+    
+    # Find all h4 headers and content sections
+    header_pattern = re.compile(r"(h4\..*?:)[\s\n]*(.*?)(?=h[1-6]\.|\Z)", re.DOTALL)
+    
+    for match in header_pattern.finditer(dtext_input):
+        header = match.group(1).strip()
+        content = match.group(2).strip()
+        
+        # Only keep headers that have actual bullet list content with wiki links
+        if content and "*" in content and "[[" in content and "]]" in content:
+            tag_sections.append(f"{header}\n\n{content}")
+    
+    # Rejoin the extracted sections
+    if tag_sections:
+        dtext_input = '\n\n'.join(tag_sections)
+    
+    # Remove ALL section tags properly
+    dtext_input = re.sub(r"\[section[^\]]*\]", "", dtext_input)  # Opening tags
+    dtext_input = re.sub(r"\[/section\]", "", dtext_input)       # Closing tags
+    
+    # Remove anchor tags with no content
+    dtext_input = re.sub(r"\n\[#[^\]]*\]\s*\n", "\n\n", dtext_input)
+    
+    # Remove some simple stuff
     dtext_input = dtext_input.replace("`", "")
     dtext_input = dtext_input.replace("\r", "")
     dtext_input = dtext_input.replace("\u003ccolor\u003e", "")
-
-    # dtext_input = dtext_input.replace("\n", "")
-    # print(dtext_input)
+    
     return dtext_input
