@@ -129,7 +129,10 @@ def parse_li(li_node, is_index_tg=False):
         if note:
             if note.startswith("- "):
                 note = note[2:]
-            entry["note"] = note
+            elif note in ("-", "---"):
+                pass
+            else:
+                entry["note"] = note
 
     # 3) Subtags: a nested <ul> inside this <li>
     sub_ul = next((c for c in children if c.get("type") == "ul"), None)
