@@ -48,7 +48,7 @@ def parse_li(li_node, is_index_tg=False):
     Parse an <li> node into a tag entry:
     - name, link (from <a>)
     - optional note (formerly description)
-    - optional subgroup
+    - optional subtags
     - marker flags
     """
     entry = {}
@@ -131,10 +131,10 @@ def parse_li(li_node, is_index_tg=False):
                 note = note[2:]
             entry["note"] = note
 
-    # 3) Subgroup: a nested <ul> inside this <li>
+    # 3) Subtags: a nested <ul> inside this <li>
     sub_ul = next((c for c in children if c.get("type") == "ul"), None)
     if sub_ul:
-        subgroup = {}
+        subtags = {}
         index = 0  # Initialize counter for numeric keys
         for sub_li in sub_ul.get("children", []):
             if sub_li.get("type") != "li":
@@ -142,10 +142,10 @@ def parse_li(li_node, is_index_tg=False):
             sub_entry = parse_li(sub_li, is_index_tg=is_index_tg)
             if sub_entry:
                 # Use index as key instead of entry name
-                subgroup[str(index)] = sub_entry
+                subtags[str(index)] = sub_entry
                 index += 1
-        if subgroup:
-            entry["subgroup"] = subgroup
+        if subtags:
+            entry["subtags"] = subtags
 
     # print("Parsed li entry:", entry)
     return entry
@@ -215,6 +215,11 @@ def main_tag_groups(dtext_title):
             new_tag_groups[group_title] = group_tags
 
     tag_groups = new_tag_groups
+    if "groups" not in tag_groups:
+        print(f"- No 'groups' key in {dtext_title} found, skipping.")
+        return  # Abort the function if there's no "groups"
+
+
     save_json(tag_groups, f"tag_groups/{dtext_title}.json")
     print(f"- Wrote {dtext_title} tag group to tag_groups/{dtext_title}.json\n")
 
