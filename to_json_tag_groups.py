@@ -23,7 +23,8 @@ csv_path = os.path.join(script_dir, "e6tags.csv")
 e6_tags_df = pd.read_csv(csv_path)
 
 # Create dictionary for faster lookups - maps tag names to (id, category) tuples
-tag_dict = dict(zip(e6_tags_df['name'], zip(e6_tags_df['id'], e6_tags_df['category'])))
+# Time complexity of O(1) for lookups while pandas DF or list is O(n) where n = num. of rows
+tag_dict = dict(zip(e6_tags_df["name"], zip(e6_tags_df["id"], e6_tags_df["category"])))
 
 
 def extract_text(nodes):
