@@ -1,6 +1,7 @@
 # DText Parser TODOs
 
 ## General
+
 - [x] Fix that headers (and maybe more) are part of a `li` if header comes after it
   - [ ] Find out if this is going to be an issue for inner `li`/`ul` tags
 - [ ] change css for better mobile support (tables mainly)
@@ -28,13 +29,14 @@
 
 ## e621-Specific TODOs
 
+- [ ] e6 has separate `[#id-here]` tags for tag/id hyperlinking instead of supplying with header
 - [ ] Handle different header rules
 - [ ] Handle backtick code blocks
 - [ ] Handle inline code like `` `inline code` ``
-- [ ] Handle HTML tags 
+- [ ] Handle HTML tags
 - [ ] Support `[sup]` and `[sub]` tags
 - [ ] Support `[color]` tags (HTML color names, tag category names, 3-6 digit hex codes)
-  - [ ] Support the HTML tag version because i guess that is a thing too yay; Related to the above issue of supporting other HTML tags 
+  - [ ] Support the HTML tag version because i guess that is a thing too yay; Related to the above issue of supporting other HTML tags
 - [ ] Use a separate ID-based link parser for e621 mode
 - [ ] Update `post #1234` format handling to match e621
 - [ ] Handle `thumb #12345` instead of `!post #1234`
