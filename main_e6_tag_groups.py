@@ -1,5 +1,6 @@
 import csv
 import re
+import sys
 
 from file_operations import load_dtext_input, save_json
 from id_link_map import ID_LINK_MAP
@@ -7,7 +8,6 @@ from random_color_print import get_colored_text
 from tg_preprocess import main_preprocess
 from to_html import runa
 from to_json_tag_groups import main_tag_groups
-import sys
 
 
 def wrap_list_items(ast):
@@ -81,6 +81,10 @@ def wrap_list_items(ast):
         if node["type"] == "text":
             lines = node["content"].split("\n")
             for line in lines:
+                if line.strip() == "" and list_stack:
+                    # If inside a list, skip blank lines entirely.
+                    continue
+
                 stripped = line.strip()
                 if stripped == "":
                     # Handling of blank lines within text nodes during list processing.
@@ -543,6 +547,7 @@ def parse_dtext_to_ast(dtext):
         stack[-1].append({"type": "text", "content": dtext[pos:]})
 
     return process_ast_links(wrap_list_items(stack[0]))
+
 
 # Read the CSV file and find tag group pages
 # Define a counter for limiting to 4 tag groups
