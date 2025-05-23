@@ -1,5 +1,11 @@
 # DText Parser TODOs
 
+## Tag lists
+
+- [ ] (e6) make work
+  - [ ] reminder: page 12159 doesnt work with current implementation
+  - [ ] maybe make different implementation than this
+
 ## General
 
 - [x] Fix that headers (and maybe more) are part of a `li` if header comes after it
@@ -29,6 +35,7 @@
 
 ## e621-Specific TODOs
 
+- [ ] dtext id links dont work if its a masked/hyper link like in 12159 section 2, shows up as `dtext-:` (see faceless, that works)
 - [ ] e6 has separate `[#id-here]` tags for tag/id hyperlinking instead of supplying with header
 - [ ] Handle different header rules
 - [ ] Handle backtick code blocks
