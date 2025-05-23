@@ -20,6 +20,7 @@
 
 ## Low Priority
 
+- [ ] Uniform AST, a bit modified but will take either dbr or e6 dtext without issue, ast->any conversions can then choose what rules to implement/support i guess
 - [ ] Find out whats causing the enormous amount of ul and li (originates in dtext to ast looks like)
 - [ ] Handle carriage returns with asterisks and headers (see `c.txt`)
 - [ ] Handle paragraphs similarly to above
@@ -36,18 +37,20 @@
 ## e621-Specific TODOs
 
 - [ ] dtext id links dont work if its a masked/hyper link like in 12159 section 2, shows up as `dtext-:` (see faceless, that works)
-- [ ] e6 has separate `[#id-here]` tags for tag/id hyperlinking instead of supplying with header
-- [ ] Handle different header rules
-- [ ] Handle backtick code blocks
-- [ ] Handle inline code like `` `inline code` ``
-- [ ] Handle HTML tags
-- [ ] Support `[sup]` and `[sub]` tags
-- [ ] Support `[color]` tags (HTML color names, tag category names, 3-6 digit hex codes)
-  - [ ] Support the HTML tag version because i guess that is a thing too yay; Related to the above issue of supporting other HTML tags
-- [ ] Use a separate ID-based link parser for e621 mode
-- [ ] Update `post #1234` format handling to match e621
-- [ ] Handle `thumb #12345` instead of `!post #1234`
-- [ ] In e621, `[code]` always creates a block (use backticks for inline)
-- [ ] Use `[section]` instead of `[expand]`
-  - [ ] Support `[section,expanded=Title]` for always-open sections
-  - [ ] Default titles are not used in e621 sections
+- [ ] e6 has separate standalone `[#id-here]` tags for tag/id hyperlinking instead of supplying with header
+- [ ] Support e6 specific dtext rules
+  - [ ] Handle different header rules
+  - [ ] Handle backtick code blocks
+  - [ ] Handle inline code like `` `inline code` ``
+  - [ ] Handle HTML tags
+  - [ ] Support `[sup]` and `[sub]` tags
+  - [ ] Support `[color]` tags (HTML color names, tag category names, 3-6 digit hex codes)
+    - [ ] Support the HTML tag version because i guess that is a thing too yay; Related to the above issue of supporting other HTML tags
+  - [ ] Use a separate ID-based link parser for e621 mode
+  - [ ] Update `post #1234` format handling to match e621
+  - [ ] Handle `thumb #12345` instead of `!post #1234`
+  - [ ] In e621, `[code]` always creates a block (use backticks for inline)
+    - [ ] Idea to have AST show codeline and codeblock start/end maybe or similar so AST is uniform in the end
+  - [ ] Use `[section]` instead of `[expand]` (or rather add support for it, not sure if can be easily fit into one file)
+    - [ ] Support `[section,expanded=Title]` for always-open sections
+    - [ ] Default titles are not used in e621 sections
