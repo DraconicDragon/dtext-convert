@@ -2,6 +2,7 @@
 
 ## Tag lists
 
+- [x] AST->JSON get actual tag name from link of tag and change name to dname/display_name
 - [ ] (e6) make work
   - [ ] reminder: page 12159 doesnt work with current implementation
   - [ ] maybe make different implementation than this
