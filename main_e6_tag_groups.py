@@ -18,6 +18,7 @@ def wrap_list_items(ast):
     """
     result = []
     list_stack = []  # Stores tuples of (level, ul_node_reference)
+    pending_blank_line = False  # Track if we've seen a blank line
 
     def push_li_to_stack(level, content_nodes):
         nonlocal result, list_stack
@@ -80,61 +81,51 @@ def wrap_list_items(ast):
     for node in ast:
         if node["type"] == "text":
             lines = node["content"].split("\n")
-            for line in lines:
-                if line.strip() == "" and list_stack:
-                    # If inside a list, skip blank lines entirely.
-                    continue
-
+            line_index = 0
+            while line_index < len(lines):
+                line = lines[line_index]
                 stripped = line.strip()
+
+                # Check for blank line - potential list terminator
                 if stripped == "":
-                    # Handling of blank lines within text nodes during list processing.
-                    # This might need further refinement based on exact DText rules
-                    # for how blank lines interact with list item continuation.
-                    # If a blank line is encountered while a list is active,
-                    # it could signify the end of the current item's text or the list itself
-                    # if not followed by another list item or indented content.
-                    # For now, if list_stack is active, we might pass to see if subsequent lines
-                    # continue the list or if this blank line should be outside.
-                    # If not in a list, append it if it's a meaningful part of the text.
-                    if not list_stack:  # If not in a list, append the blank line as text.
+                    if list_stack:
+                        pending_blank_line = True
+                    else:
                         result.append({"type": "text", "content": line})
-                    # If in a list, blank lines are tricky. They might be part of an item or separate items.
-                    # The original code skipped them if stripped == "".
-                    # Let's refine to append if it's part of list item's multiline content or separate.
-                    # This part of logic is complex and depends on precise DText rules.
-                    # A simple approach for now: if it's not a list item, and we are in a list,
-                    # it could be a text continuation or a separator.
-                    # The original code's `continue` for blank lines is preserved here for minimal change
-                    # to that specific aspect, focusing on the header issue.
-                    if stripped == "":  # Re-check stripped for the original continue logic
-                        continue
+                    line_index += 1
+                    continue
 
                 match = re.match(r"^(\*+)\s+(.*)", line)
                 if match:
+                    # List item line - reset pending blank line state
+                    pending_blank_line = False
                     level = len(match.group(1))
                     raw_content = match.group(2)
-                    # The content of the list item needs to be parsed.
-                    # Calling full parse_dtext_to_ast here can lead to problematic recursion
-                    # if parse_dtext_to_ast itself calls wrap_list_items.
-                    # Assuming parse_dtext_to_ast is designed to handle sub-parsing or
-                    # this is a known part of the existing design.
                     content_nodes = parse_dtext_to_ast(raw_content)
                     push_li_to_stack(level, content_nodes)
-                else:  # Not a list item line
+                else:
+                    # Not a list item
+                    # If we've seen a blank line followed by non-list content, end the list
+                    if pending_blank_line and list_stack:
+                        list_stack.clear()  # End all active lists
+                        pending_blank_line = False
+
                     if list_stack:
-                        # This line is part of the current list item's content
-                        # It should be parsed for inline DText.
-                        parsed_line_nodes = parse_dtext_to_ast(line)  # Similar concern as above
+                        # If still in a list context, this is content for the current item
+                        parsed_line_nodes = parse_dtext_to_ast(line)
                         for pl_node in parsed_line_nodes:
                             append_to_current_li(pl_node)
                     else:
+                        # Outside a list, regular content
                         result.append({"type": "text", "content": line})
-        else:  # Non-text node (e.g. header, quote, table element)
+
+                line_index += 1
+        else:  # Non-text node
             is_header_node = node["type"] in {"h1", "h2", "h3", "h4", "h5", "h6", "section", "expand"}
 
             if is_header_node:
-                # If the current node is a header, it signifies the end of any preceding list.
-                # Clear the list_stack to ensure the header is not appended to a list item.
+                # Headers always end lists
+                # TODO: might cause issue, idk if there are headers/sections/expanders in list items
                 list_stack.clear()
 
             # Recursively call wrap_list_items for the children of the current node.
@@ -617,7 +608,6 @@ def do_thing(count):
 # do_thing(count)
 do_thing_debug(12159, do_preprocess=True, print_dtext=True)
 
-# todo gender 12159 doesnt work aaa idk why, im tired
 # If no tag groups were found, print a message
 if count == 0:
     print("No tag group pages found in the CSV file.")
