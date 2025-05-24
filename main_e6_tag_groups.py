@@ -554,48 +554,68 @@ def parse_dtext_to_ast(dtext):
 count = 0
 MAX_TAG_GROUPS = 35
 
-TARGET_ID_OVERRIDE = None
 
-# Open the CSV file and process tag group pages
-with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
-    reader = csv.DictReader(csvfile)
-    for row in reader:
-        # Check if the title contains "tag_group:"
-        if "tag_group:" in row["title"]:
-            # Get the ID from the row
-            target_id = int(row["id"])
+def do_thing_debug(target_id, do_preprocess, print_dtext):
+    # Open the CSV file and process tag group pages
+    with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
 
-            # If a target ID override is provided, only process that ID
-            if TARGET_ID_OVERRIDE is not None and target_id != TARGET_ID_OVERRIDE:
-                continue
+        # Process this tag group page
+        dtext_page = load_dtext_input(source="csv", target_id=target_id)
+        dtext_input = dtext_page[1]  # 0 = title, 1 = page content
 
-            colored_title = get_colored_text(row["title"])
-            print(f"Processing tag group: {colored_title} (ID: {target_id})")
+        if do_preprocess:
+            dtext_input = main_preprocess(dtext_input)
+        if print_dtext:
+            print(dtext_input)
 
-            # Process this tag group page
-            dtext_page = load_dtext_input(source="csv", target_id=target_id)
-            # dtext_page = load_dtext_input(source="csv", target_id=1657)
-            dtext_input = dtext_page[1]  # 0 = title, 1 = page content
+        # Parse the modified DText string into an Abstract Syntax Tree (AST)
+        ast = parse_dtext_to_ast(dtext_input)
 
-            finished_dtext = main_preprocess(dtext_input)
-            #finished_dtext = dtext_input
-            #print(finished_dtext)
+        # Save as JSON
+        output_filename = "ast_output.json"
+        save_json(ast, output_filename)
 
-            # Parse the modified DText string into an Abstract Syntax Tree (AST)
-            ast = parse_dtext_to_ast(finished_dtext)
+        runa(dtext_page[0])
+        main_tag_groups(dtext_page[0], page_id=target_id)
 
-            # Save as JSON
-            # output_filename = f"ast_output_{target_id}.json"
-            output_filename = "ast_output.json"
-            save_json(ast, output_filename)
 
-            # runa(dtext_page[0])
-            main_tag_groups(dtext_page[0], page_id=target_id)
+def do_thing(count):
+    # Open the CSV file and process tag group pages
+    with open("wiki_pages-2025-05-01.csv", "r", encoding="utf-8") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            # Check if the title contains "tag_group:"
+            if "tag_group:" in row["title"]:
+                # Get the ID from the row
+                target_id = int(row["id"])
 
-            # Increment counter and check if we've reached the limit
-            count += 1
-            if TARGET_ID_OVERRIDE is None and count >= MAX_TAG_GROUPS:
-                break
+                colored_title = get_colored_text(row["title"])
+                print(f"Processing tag group: {colored_title} (ID: {target_id})")
+
+                # Process this tag group page
+                dtext_page = load_dtext_input(source="csv", target_id=target_id)
+                dtext_input = dtext_page[1]  # 0 = title, 1 = page content
+
+                finished_dtext = main_preprocess(dtext_input)
+                # print(finished_dtext)
+
+                # Parse the modified DText string into an Abstract Syntax Tree (AST)
+                ast = parse_dtext_to_ast(finished_dtext)
+
+                # Save as JSON
+                # output_filename = f"ast_output_{target_id}.json"
+                output_filename = "ast_output.json"
+                save_json(ast, output_filename)
+
+                runa(dtext_page[0])
+                main_tag_groups(dtext_page[0], page_id=target_id)
+
+                # Increment counter and check if we've reached the limit
+                count += 1
+
+
+# do_thing(count)
+do_thing_debug(12159, do_preprocess=True, print_dtext=True)
 
 # todo gender 12159 doesnt work aaa idk why, im tired
 # If no tag groups were found, print a message
