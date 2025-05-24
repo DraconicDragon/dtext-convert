@@ -20,15 +20,19 @@ MARKERS = {
 # Get the directory of the current script
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Construct the full path to the CSV file
+# Construct the full path to the CSV files
 csv_path = os.path.join(script_dir, "tags-2025-05-13.csv")
+wiki_csv_path = os.path.join(script_dir, "wiki_pages-2025-05-01.csv")
 
-# Load CSV into DataFrame
+# Load CSVs into DataFrames
 e6_tags_df = pd.read_csv(csv_path)
+wiki_pages_df = pd.read_csv(wiki_csv_path)
 
-# Create dictionary for faster lookups - maps tag names to (id, category) tuples
-# Time complexity of O(1) for lookups while pandas DF or list is O(n) where n = num. of rows
+# Create dictionary for faster lookups - maps tag names to (id, category, post_count) tuples
 tag_dict = dict(zip(e6_tags_df["name"], zip(e6_tags_df["id"], e6_tags_df["category"], e6_tags_df["post_count"])))
+
+# Create a wiki_dict mapping title to id for fast lookup
+wiki_dict = dict(zip(wiki_pages_df["title"], wiki_pages_df["id"]))
 
 
 def extract_text(nodes):
@@ -82,9 +86,17 @@ def parse_li(li_node, is_index_tg=False):
             tag_info = tag_dict.get(name, (None, None, None))  # 0: id; 1: category_id; 2: post_count
 
             if tag_info[2] == 0:  # ignore tags with 0 posts
-                print(f"- \033[1m\033[93mTag '\033[94m{name}\033[93m' has 0 posts, marking invalid\033[0m")
-                entry["id"] = -1
-                entry["invalid_reason"] = "0 posts"  # NOTE: probably temporary thing
+                # Check if this tag has a wiki page
+                wiki_id = wiki_dict.get(name)
+                if wiki_id is not None:
+                    entry["id"] = -1
+                    entry["has_wiki"] = int(wiki_id)
+                    entry["invalid_reason"] = "no_posts,has_wiki"
+                    print(f"- \033[1m\033[93mTag '\033[94m{name}\033[93m' has 0 posts but has wiki page (id={wiki_id}), marking as junction\033[0m")
+                else:
+                    print(f"- \033[1m\033[93mTag '\033[94m{name}\033[93m' has 0 posts, marking invalid\033[0m")
+                    entry["id"] = -1
+                    entry["invalid_reason"] = "no_posts"  # NOTE: probably temporary thing
             else:
                 entry["id"] = int(tag_info[0])
         except (TypeError, ValueError):

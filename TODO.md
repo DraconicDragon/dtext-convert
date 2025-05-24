@@ -2,9 +2,10 @@
 
 ## Tag lists
 
+- [ ] support `[ltable]` tags, idk if as normal to keep json simpler or if should denote as table (see 25769 "size related:")
 - [x] AST->JSON get actual tag name from link of tag and change name to dname/display_name
 - [ ] (e6) make work
-  - [ ] reminder: page 12159 doesnt work with current implementation
+  - [x] reminder: page 12159 doesnt work with current implementation
   - [ ] maybe make different implementation than this
 
 ## General
