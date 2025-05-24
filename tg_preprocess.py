@@ -11,8 +11,8 @@ def filter_sections(text, exclude_keywords=None):
             "contents",
             "forum discussions",
             "forum discussion",
-            "see also",
-            "also see",
+            # "see also",
+            # "also see",
             "guidelines",
         ]
 
@@ -150,44 +150,44 @@ def main_preprocess(dtext_input):
     dtext_input = add_missing_headers(dtext_input)
 
     # Extract only the actual tag group sections with more flexible header matching
-    tag_sections = []
+    # tag_sections = []
 
-    # Find h4 headers with any format, followed by bullet lists
-    header_pattern = re.compile(r"(h4\.[^\n]+)[\s\n]*(.*?)(?=h[1-6]\.|\Z)", re.DOTALL)
+    # # Find h4 headers with any format, followed by bullet lists
+    # header_pattern = re.compile(r"(h4\.[^\n]+)[\s\n]*(.*?)(?=h[1-6]\.|\Z)", re.DOTALL)
 
-    for match in header_pattern.finditer(dtext_input):
-        header = match.group(1).strip()
-        content = match.group(2).strip()
+    # for match in header_pattern.finditer(dtext_input):
+    #     header = match.group(1).strip()
+    #     content = match.group(2).strip()
 
-        # Only keep headers that have actual bullet list content with wiki links
-        # AND skip table of contents sections
-        if (
-            content
-            and "*" in content
-            and "[[" in content
-            and "]]" in content
-            and not header.lower().endswith("contents:")
-            and not "see also" in header.lower()
-        ):
-            tag_sections.append(f"{header}\n\n{content}")
+    #     # Only keep headers that have actual bullet list content with wiki links
+    #     # AND skip table of contents sections
+    #     if (
+    #         content
+    #         and "*" in content
+    #         and "[[" in content
+    #         and "]]" in content
+    #         and not header.lower().endswith("contents:")
+    #         and "see also" not in header.lower()
+    #     ):
+    #         tag_sections.append(f"{header}\n\n{content}")
 
-    # Rejoin the extracted sections
-    if tag_sections:
-        dtext_input = "\n\n".join(tag_sections)
-    else:
-        # If no matching sections were found, check if we need a different approach
-        print("Warning: No tag sections found with standard pattern, trying alternative approach...")
-        # Try to find any sections with bullet points and wiki links
-        bullet_sections = re.findall(
-            r"(h4\.[^\n]+)[\s\n]*(\*+\s*\[\[.*?\]\].*?)(?=h[1-6]\.|\Z)", dtext_input, re.DOTALL
-        )
-        if bullet_sections:
-            tag_sections = [
-                f"{header}\n\n{content}"
-                for header, content in bullet_sections
-                if "contents:" not in header.lower() and "see also" not in header.lower()
-            ]
-            dtext_input = "\n\n".join(tag_sections)
+    # # Rejoin the extracted sections
+    # if tag_sections:
+    #     dtext_input = "\n\n".join(tag_sections)
+    # else:
+    #     # If no matching sections were found, check if we need a different approach
+    #     print("Warning: No tag sections found with standard pattern, trying alternative approach...")
+    #     # Try to find any sections with bullet points and wiki links
+    #     bullet_sections = re.findall(
+    #         r"(h4\.[^\n]+)[\s\n]*(\*+\s*\[\[.*?\]\].*?)(?=h[1-6]\.|\Z)", dtext_input, re.DOTALL
+    #     )
+    #     if bullet_sections:
+    #         tag_sections = [
+    #             f"{header}\n\n{content}"
+    #             for header, content in bullet_sections
+    #             if "contents:" not in header.lower() and "see also" not in header.lower()
+    #         ]
+    #         dtext_input = "\n\n".join(tag_sections)
 
     # Remove ALL section tags properly
     dtext_input = re.sub(r"\[section[^\]]*\]", "", dtext_input)  # Opening tags
@@ -213,5 +213,6 @@ def main_preprocess(dtext_input):
 
     # remove empty "[]"
     dtext_input = re.sub(r"\[\]", "", dtext_input)
+    
 
     return dtext_input
