@@ -1,4 +1,3 @@
-import json
 import os
 import re
 
@@ -46,7 +45,7 @@ def extract_text(nodes):
 def parse_li(li_node, is_index_tg=False):
     """
     Parse an <li> node into a tag entry:
-    - name, link (from <a>)
+    - name (from href endpoint), dname (display name from <a> text)
     - optional note (formerly description)
     - optional subtags
     - marker flags
@@ -59,47 +58,43 @@ def parse_li(li_node, is_index_tg=False):
     if not a:
         # print("No <a> tag found in li_node")
         return None
-    name = extract_text(a["children"]).strip()
 
-    # possibly leads to false positives but idk
-    # actually its probably easier to give this IDs of -1
-    # and then look over them to see if they are really invalid
-    # if "🔗" in name:
-    #     return None
-    # todo: either use this or check for non-hyperlinked text appearing first in li
+    href = a.get("attrs", {}).get("href")
+    if href:
+        # Extract the last part after /wiki_pages/
+        match = re.search(r"/wiki_pages/([^/?#]+)", href)
+        if match:
+            name = match.group(1)
+        else:
+            name = extract_text(a["children"]).strip().replace(" ", "_").lower()
+    else:
+        name = extract_text(a["children"]).strip().replace(" ", "_").lower()
 
-    # Detect markers in the name itself
-    # for marker, field in MARKERS.items():
-    #     if marker in name:
-    #         entry[field] = True
-    #         name = name.replace(marker, "")
+    entry["name"] = name
+
+    # Optionally add display name as dname key
+    # if True:
+    #     dname = extract_text(a["children"]).strip()
+    #     entry["dname"] = dname
 
     if not is_index_tg:
-        name = name.replace(" ", "_").lower()
-
         try:
             tag_info = tag_dict.get(name, (None, None, None))  # 0: id; 1: category_id; 2: post_count
 
             if tag_info[2] == 0:  # ignore tags with 0 posts
                 print(f"- \033[1m\033[93mTag '\033[94m{name}\033[93m' has 0 posts, marking invalid\033[0m")
                 entry["id"] = -1
-                # entry["cat_id"] = -1
                 entry["invalid_reason"] = "0 posts"  # NOTE: probably temporary thing
             else:
                 entry["id"] = int(tag_info[0])
-                # entry["cat_id"] = int(tag_info[1])  # todo: maybe drop category id? not sure if useful
         except (TypeError, ValueError):
             print(f"- \033[1m\033[91mTag '\033[94m{name}\033[91m' not found or invalid in e6tags.csv\033[0m")
             entry["id"] = -1  # default value to set if none so key exists but easier to see that its invalid
-            # entry["cat_id"] = -1
             entry["invalid_reason"] = "not found/invalid tag"
     else:
-        href = a.get("attrs", {}).get("href")
         if href:
             endpoint = re.sub(r".*?/wiki_pages", "", href)
             entry["endpoint"] = endpoint
-
-    entry["name"] = name
 
     # 2) Note: any text nodes after the <a>, with markers stripped
     note_nodes = []
